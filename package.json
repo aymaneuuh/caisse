@@ -1,0 +1,23 @@
+{
+  "name": "caisse-electron-sqlite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Application de caisse (Electron.js + SQLite)",
+  "main": "main/main.js",
+  "author": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.1",
+    "dayjs": "^1.11.13",
+    "pdfkit": "^0.15.0"
+  },
+  "devDependencies": {
+    "electron": "^31.6.0",
+    "electron-builder": "^24.13.3"
+  }
+}

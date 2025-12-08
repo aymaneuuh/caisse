@@ -1,0 +1,19 @@
+appId: com.example.caisse
+productName: Caisse Snack
+asar: true
+files:
+  - dist/**/*
+  - main/**/*
+  - renderer/**/*
+  - db/**/*
+  - assets/**/*
+  - package.json
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  artifactName: "${productName}-Setup-${version}.exe"
