@@ -8,6 +8,12 @@ const btnReload = document.getElementById('btnReload');
 const btnCheckout = document.getElementById('btnCheckout');
 const btnClear = document.getElementById('btnClear');
 const btnPrint = document.getElementById('btnPrint');
+// Login elements
+const loginOverlay = document.getElementById('login');
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+const btnLogin = document.getElementById('btnLogin');
+const loginStatus = document.getElementById('loginStatus');
 
 let lastSaleId = null;
 let products = [];
@@ -155,5 +161,42 @@ btnPrint.addEventListener('click', async () => {
 
 // Initial load
 window.addEventListener('DOMContentLoaded', () => {
-  loadCategories().then(loadProducts);
+  ensureSession().then(() => loadCategories().then(loadProducts));
 });
+
+async function ensureSession() {
+  const res = await window.api.invoke('auth:getSession');
+  if (res?.user) {
+    hideLogin();
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  loginOverlay.classList.remove('hidden');
+  loginOverlay.setAttribute('aria-hidden', 'false');
+  loginUser.focus();
+}
+function hideLogin() {
+  loginOverlay.classList.add('hidden');
+  loginOverlay.setAttribute('aria-hidden', 'true');
+}
+
+btnLogin?.addEventListener('click', doLogin);
+loginPass?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  loginStatus.textContent = 'Connexion...';
+  const username = (loginUser.value||'').trim();
+  const password = loginPass.value||'';
+  const res = await window.api.invoke('auth:login', { username, password });
+  if (!res?.ok) {
+    loginStatus.textContent = res?.error || 'Échec de connexion';
+    return;
+  }
+  loginStatus.textContent = '';
+  hideLogin();
+  // Reload data for session-based UI if needed
+  loadCategories().then(loadProducts);
+}
