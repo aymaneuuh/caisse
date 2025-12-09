@@ -12,15 +12,28 @@ const productTable = document.getElementById('productTable').querySelector('tbod
 const fromDate = document.getElementById('fromDate');
 const toDate = document.getElementById('toDate');
 const btnLoadSales = document.getElementById('btnLoadSales');
+const btnLoadAllSales = document.getElementById('btnLoadAllSales');
 const sStatus = document.getElementById('sStatus');
 const salesTable = document.getElementById('salesTable').querySelector('tbody');
+// Work session controls
+const btnOpenSession = document.getElementById('btnOpenSession');
+const btnCloseSession = document.getElementById('btnCloseSession');
+const sessionInfo = document.getElementById('sessionInfo');
+const sessionsTable = document.getElementById('sessionsTable')?.querySelector('tbody');
+
+// Users (cashier management)
+const uName = document.getElementById('uName');
+const uPass = document.getElementById('uPass');
+const btnAddCashier = document.getElementById('btnAddCashier');
+const uStatus = document.getElementById('uStatus');
+const usersTable = document.getElementById('usersTable').querySelector('tbody');
 
 function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
 
 async function ensureAdminSession() {
   const res = await window.api.invoke('auth:getSession');
   if (!res?.user) {
-    window.location = 'index.html';
+    window.location = 'login.html';
     return false;
   }
   userBadge.textContent = `${res.user.username} (${res.user.role})`;
@@ -86,7 +99,7 @@ btnAddProduct.addEventListener('click', async () => {
 
 btnLogout.addEventListener('click', async () => {
   await window.api.invoke('auth:logout');
-  window.location = 'index.html';
+  window.location = 'login.html';
 });
 
 goPos.addEventListener('click', () => {
@@ -95,6 +108,39 @@ goPos.addEventListener('click', () => {
 
 function todayStr(d) {
   return d.toISOString().slice(0,10);
+}
+
+async function refreshWorkSessionInfo() {
+  const cur = await window.api.invoke('workSession:getCurrent');
+  const s = cur.session;
+  if (s) {
+    sessionInfo.textContent = `Session ouverte #${s.id} · depuis ${s.opened_at.replace('T',' ').slice(0,16)}`;
+    btnOpenSession.disabled = true; btnCloseSession.disabled = false;
+  } else {
+    sessionInfo.textContent = 'Aucune session ouverte';
+    btnOpenSession.disabled = false; btnCloseSession.disabled = true;
+  }
+}
+
+async function loadSessionsHistory() {
+  const list = await window.api.invoke('workSession:list');
+  if (!sessionsTable) return;
+  sessionsTable.innerHTML = list.map(s => `
+    <tr data-id="${s.id}">
+      <td>${s.id}</td>
+      <td>${s.opened_by}</td>
+      <td>${s.opened_at.replace('T',' ').slice(0,16)}</td>
+      <td>${s.closed_at ? s.closed_at.replace('T',' ').slice(0,16) : '-'}</td>
+      <td><button data-view-sales>Voir ventes</button></td>
+    </tr>
+  `).join('');
+  sessionsTable.querySelectorAll('button[data-view-sales]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tr = btn.closest('tr');
+      const sid = Number(tr.getAttribute('data-id'));
+      window.location = `session-sales.html?sessionId=${sid}`;
+    });
+  });
 }
 
 async function loadSales() {
@@ -107,9 +153,41 @@ async function loadSales() {
       <td>${formatPrice(s.total)}</td>
       <td>${s.created_at.replace('T',' ').slice(0,16)}</td>
       <td>${s.cashier_id}</td>
-      <td><button data-cancel>Annuler</button></td>
+      <td>
+        <button data-detail>Voir détail</button>
+        <button data-cancel>Supprimer</button>
+      </td>
     </tr>
   `).join('');
+  bindSalesActions();
+}
+
+function bindSalesActions() {
+  const ticketModal = document.getElementById('ticketModal');
+  const ticketInfo = document.getElementById('ticketInfo');
+  const ticketItems = document.getElementById('ticketItems');
+  const closeTicket = document.getElementById('closeTicket');
+
+  salesTable.querySelectorAll('button[data-detail]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const saleId = Number(tr.getAttribute('data-id'));
+      const res = await window.api.invoke('sales:getDetail', saleId);
+      if (!res?.ok) { sStatus.textContent = res?.error || 'Échec détail'; return; }
+      const { sale, items } = res;
+      ticketInfo.textContent = `Ticket #${sale.id} · Total ${formatPrice(sale.total)} · ${sale.created_at.replace('T',' ').slice(0,16)}`;
+      ticketItems.innerHTML = items.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${formatPrice(i.price)}</td>
+          <td>${i.quantity}</td>
+          <td>${formatPrice(i.price * i.quantity)}</td>
+        </tr>
+      `).join('');
+      ticketModal.classList.remove('hidden');
+      ticketModal.setAttribute('aria-hidden','false');
+    });
+  });
   salesTable.querySelectorAll('button[data-cancel]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const tr = btn.closest('tr');
@@ -117,16 +195,102 @@ async function loadSales() {
       const sess = await window.api.invoke('auth:getSession');
       const admin_id = sess?.user?.id;
       const res = await window.api.invoke('sales:cancel', { saleId, admin_id });
-      if (res?.ok) { sStatus.textContent = 'Vente annulée.'; loadSales(); }
+      if (res?.ok) { sStatus.textContent = 'Vente annulée.'; await loadSales(); }
       else { sStatus.textContent = res?.error || 'Échec annulation'; }
     });
+  });
+  closeTicket.addEventListener('click', () => {
+    ticketModal.classList.add('hidden');
+    ticketModal.setAttribute('aria-hidden','true');
   });
 }
 
 btnLoadSales.addEventListener('click', loadSales);
+btnLoadAllSales.addEventListener('click', async () => {
+  const list = await window.api.invoke('sales:getAll');
+  salesTable.innerHTML = list.map(s => `
+    <tr data-id="${s.id}">
+      <td>#${s.id}</td>
+      <td>${formatPrice(s.total)}</td>
+      <td>${s.created_at.replace('T',' ').slice(0,16)}</td>
+      <td>${s.cashier_id}</td>
+      <td>
+        <button data-detail>Voir détail</button>
+        <button data-cancel>Supprimer</button>
+      </td>
+    </tr>
+  `).join('');
+  bindSalesActions();
+});
+
+btnOpenSession.addEventListener('click', async () => {
+  const res = await window.api.invoke('workSession:open');
+  sessionInfo.textContent = res?.ok ? `Session ouverte #${res.sessionId}` : (res?.error || 'Échec ouverture');
+  await refreshWorkSessionInfo();
+  await loadSessionsHistory();
+});
+btnCloseSession.addEventListener('click', async () => {
+  const res = await window.api.invoke('workSession:close');
+  sessionInfo.textContent = res?.ok ? 'Session fermée.' : (res?.error || 'Échec fermeture');
+  await refreshWorkSessionInfo();
+  await loadSessionsHistory();
+});
+
+btnAddCashier.addEventListener('click', async () => {
+  const username = (uName.value||'').trim();
+  const password = uPass.value||'';
+  uStatus.textContent = 'Ajout...';
+  const res = await window.api.invoke('users:add', { username, password, role: 'cashier' });
+  if (!res?.ok) { uStatus.textContent = res?.error || 'Échec ajout'; return; }
+  uStatus.textContent = `Caissier '${res.user.username}' ajouté.`;
+  uName.value=''; uPass.value='';
+  await loadUsers();
+});
+
+async function loadUsers() {
+  const items = await window.api.invoke('users:getAll');
+  usersTable.innerHTML = items.map(u => `
+    <tr data-id="${u.id}">
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.role}</td>
+      <td>
+        <input type="password" placeholder="Nouveau mot de passe" data-newpw />
+        <button data-reset ${u.role==='admin' ? 'disabled' : ''}>Réinitialiser</button>
+        <button data-delete ${u.role==='admin' ? 'disabled' : ''}>Supprimer</button>
+      </td>
+    </tr>
+  `).join('');
+
+  usersTable.querySelectorAll('button[data-reset]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const uid = Number(tr.getAttribute('data-id'));
+      const pw = tr.querySelector('[data-newpw]').value;
+      uStatus.textContent = 'Mise à jour...';
+      const res = await window.api.invoke('users:resetPassword', { userId: uid, newPassword: pw });
+      uStatus.textContent = res?.ok ? 'Mot de passe mis à jour.' : (res?.error || 'Échec');
+      tr.querySelector('[data-newpw]').value = '';
+    });
+  });
+  usersTable.querySelectorAll('button[data-delete]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const uid = Number(tr.getAttribute('data-id'));
+      if (!confirm('Supprimer cet utilisateur ?')) return;
+      uStatus.textContent = 'Suppression...';
+      const res = await window.api.invoke('users:delete', { userId: uid });
+      if (res?.ok) { uStatus.textContent = 'Utilisateur supprimé.'; loadUsers(); }
+      else { uStatus.textContent = res?.error || 'Échec'; }
+    });
+  });
+}
 
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await ensureAdminSession())) return;
+  await refreshWorkSessionInfo();
+  await loadSessionsHistory();
+  await loadUsers();
   await loadCategories();
   await loadProducts();
   const t = todayStr(new Date()); fromDate.value = t; toDate.value = t; await loadSales();

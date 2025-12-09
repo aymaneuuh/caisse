@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS sales (
   total REAL NOT NULL,
   created_at TEXT NOT NULL,
   cashier_id INTEGER NOT NULL,
+  session_id INTEGER,
   FOREIGN KEY (cashier_id) REFERENCES users(id)
 );
 
@@ -44,4 +45,13 @@ CREATE TABLE IF NOT EXISTS audit (
   user_id INTEGER,
   created_at TEXT NOT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Admin sessions (workday sessions)
+CREATE TABLE IF NOT EXISTS sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  opened_by INTEGER NOT NULL,
+  opened_at TEXT NOT NULL,
+  closed_at TEXT,
+  FOREIGN KEY (opened_by) REFERENCES users(id)
 );

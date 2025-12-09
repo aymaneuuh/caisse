@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ventes de la session — Caisse Snack</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Ventes de la session</h1>
+    <div class="actions">
+      <span id="sessionLabel" class="muted"></span>
+      <button id="btnBackAdmin" class="secondary">Retour à l'administration</button>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="catalog">
+      <h2>Tickets de la session</h2>
+      <div id="sStatus" class="muted"></div>
+      <table class="admin-table" id="salesTable">
+        <thead><tr><th>#</th><th>Total</th><th>Date/Heure</th><th>Caissier</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+  <!-- Ticket Detail Modal -->
+  <div id="ticketModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-dialog">
+      <h3>Détail du ticket</h3>
+      <div id="ticketInfo" class="muted"></div>
+      <table class="admin-table">
+        <thead><tr><th>Produit</th><th>Prix</th><th>Quantité</th><th>Total</th></tr></thead>
+        <tbody id="ticketItems"></tbody>
+      </table>
+      <div class="modal-actions">
+        <button id="closeTicket" class="secondary">Fermer</button>
+      </div>
+    </div>
+  </div>
+  <script src="session-sales.js"></script>
+</body>
+</html>

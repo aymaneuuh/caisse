@@ -4,6 +4,15 @@ const { printTicket } = require('./printer');
 
 module.exports = function registerIpcHandlers(ipcMain, db) {
   let session = { user: null };
+  let currentWorkSessionId = null; // admin-opened session id
+
+  // Initialize current session from DB if one is open (closed_at IS NULL)
+  try {
+    const open = db.get('SELECT id FROM sessions WHERE closed_at IS NULL ORDER BY id DESC');
+    if (open && open.id) currentWorkSessionId = open.id;
+  } catch (e) {
+    // sessions table may not exist yet on first run; ignore
+  }
 
   function isHashed(pw) { return typeof pw === 'string' && pw.startsWith('$2'); }
   function requireAdmin() {
@@ -79,9 +88,48 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
   ipcMain.handle('users:getAll', () => {
     return db.all('SELECT id, username, role FROM users ORDER BY username');
   });
+  ipcMain.handle('users:add', (event, { username, password, role }) => {
+    requireAdmin();
+    const uname = (username||'').trim();
+    const pw = password||'';
+    const r = (role||'cashier').trim();
+    if (!uname || uname.length < 3) return { ok: false, error: 'Nom utilisateur trop court' };
+    if (!pw || pw.length < 3) return { ok: false, error: 'Mot de passe trop court' };
+    const exists = db.get('SELECT id FROM users WHERE username=?', [uname]);
+    if (exists) return { ok: false, error: 'Nom utilisateur déjà pris' };
+    const hash = bcrypt.hashSync(pw, 10);
+    db.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [uname, hash, r]);
+    const id = db.get('SELECT last_insert_rowid() as id').id;
+    return { ok: true, user: { id, username: uname, role: r } };
+  });
+  ipcMain.handle('users:resetPassword', (event, { userId, newPassword }) => {
+    requireAdmin();
+    const uid = Number(userId);
+    const pw = newPassword||'';
+    if (!uid) return { ok: false, error: 'Utilisateur invalide' };
+    if (!pw || pw.length < 3) return { ok: false, error: 'Mot de passe trop court' };
+    const exists = db.get('SELECT id FROM users WHERE id=?', [uid]);
+    if (!exists) return { ok: false, error: 'Utilisateur introuvable' };
+    const hash = bcrypt.hashSync(pw, 10);
+    db.run('UPDATE users SET password=? WHERE id=?', [hash, uid]);
+    return { ok: true };
+  });
+  ipcMain.handle('users:delete', (event, { userId }) => {
+    requireAdmin();
+    const uid = Number(userId);
+    if (!uid) return { ok: false, error: 'Utilisateur invalide' };
+    const u = db.get('SELECT id, role FROM users WHERE id=?', [uid]);
+    if (!u) return { ok: false, error: 'Utilisateur introuvable' };
+    if (u.role === 'admin') return { ok: false, error: "Impossible de supprimer l'admin" };
+    db.run('DELETE FROM users WHERE id=?', [uid]);
+    return { ok: true };
+  });
 
   // Sales
   ipcMain.handle('sales:create', (event, { items, cashier_id }) => {
+    if (!currentWorkSessionId) {
+      return { ok: false, error: 'Aucune session ouverte. Contactez un administrateur.' };
+    }
     const now = dayjs().toISOString();
     const saleId = db.transaction(() => {
       let total = 0;
@@ -90,7 +138,7 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
         const unitPrice = it.price ?? p.price;
         total += unitPrice * it.quantity;
       }
-      db.run('INSERT INTO sales (total, created_at, cashier_id) VALUES (?, ?, ?)', [total, now, cashier_id]);
+      db.run('INSERT INTO sales (total, created_at, cashier_id, session_id) VALUES (?, ?, ?, ?)', [total, now, cashier_id, currentWorkSessionId]);
       const saleId = db.get('SELECT last_insert_rowid() as id').id;
       for (const it of items) {
         const p = db.get('SELECT id, price FROM products WHERE id=?', [it.product_id]);
@@ -105,6 +153,15 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
 
   ipcMain.handle('sales:getByDate', (event, { from, to }) => {
     return db.all('SELECT * FROM sales WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC', [from, to]);
+  });
+  ipcMain.handle('sales:getAll', () => {
+    return db.all('SELECT * FROM sales ORDER BY created_at DESC');
+  });
+  ipcMain.handle('sales:getDetail', (event, saleId) => {
+    const sale = db.get('SELECT * FROM sales WHERE id=?', [saleId]);
+    if (!sale) return { ok: false, error: 'Vente introuvable' };
+    const items = db.all('SELECT si.quantity, si.price, p.name FROM sale_items si JOIN products p ON p.id=si.product_id WHERE si.sale_id=?', [saleId]);
+    return { ok: true, sale, items };
   });
 
   ipcMain.handle('sales:cancel', (event, { saleId, admin_id }) => {
@@ -122,5 +179,58 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
   ipcMain.handle('printer:printTicket', async (event, saleId) => {
     const result = await printTicket(db, saleId);
     return result;
+  });
+
+  // Work sessions (admin open/close)
+  ipcMain.handle('workSession:getCurrent', () => {
+    // Check DB for any open session (closed_at IS NULL)
+    const open = db.get('SELECT * FROM sessions WHERE closed_at IS NULL ORDER BY id DESC');
+    if (open && open.id) {
+      currentWorkSessionId = open.id; // sync memory
+      return { ok: true, session: open };
+    }
+    currentWorkSessionId = null;
+    return { ok: true, session: null };
+  });
+  ipcMain.handle('workSession:open', (event) => {
+    requireAdmin();
+    // Check DB for any lingering open session
+    const openDb = db.get('SELECT id FROM sessions WHERE closed_at IS NULL ORDER BY id DESC');
+    if (openDb && openDb.id) {
+      currentWorkSessionId = openDb.id;
+      return { ok: false, error: `Session déjà ouverte (#${openDb.id})` };
+    }
+    if (currentWorkSessionId) {
+      const s = db.get('SELECT * FROM sessions WHERE id=?', [currentWorkSessionId]);
+      return { ok: false, error: `Session déjà ouverte (#${s.id})` };
+    }
+    const now = dayjs().toISOString();
+    db.run('INSERT INTO sessions (opened_by, opened_at) VALUES (?, ?)', [session.user.id, now]);
+    currentWorkSessionId = db.get('SELECT last_insert_rowid() as id').id;
+    db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['session:open', session.user.id, now]);
+    return { ok: true, sessionId: currentWorkSessionId };
+  });
+  ipcMain.handle('workSession:close', () => {
+    requireAdmin();
+    if (!currentWorkSessionId) {
+      // Try to find any open session in DB and close it
+      const openDb = db.get('SELECT id FROM sessions WHERE closed_at IS NULL ORDER BY id DESC');
+      if (openDb && openDb.id) {
+        currentWorkSessionId = openDb.id;
+      } else {
+        return { ok: false, error: 'Aucune session ouverte' };
+      }
+    }
+    const now = dayjs().toISOString();
+    db.run('UPDATE sessions SET closed_at=? WHERE id=?', [now, currentWorkSessionId]);
+    db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['session:close', session.user.id, now]);
+    currentWorkSessionId = null;
+    return { ok: true };
+  });
+  ipcMain.handle('workSession:list', () => {
+    return db.all('SELECT * FROM sessions ORDER BY opened_at DESC');
+  });
+  ipcMain.handle('workSession:getSales', (event, sessionId) => {
+    return db.all('SELECT * FROM sales WHERE session_id=? ORDER BY created_at DESC', [sessionId]);
   });
 };

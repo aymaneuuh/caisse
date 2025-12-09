@@ -18,7 +18,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'login.html'));
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }

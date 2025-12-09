@@ -8,12 +8,7 @@ const btnReload = document.getElementById('btnReload');
 const btnCheckout = document.getElementById('btnCheckout');
 const btnClear = document.getElementById('btnClear');
 const btnPrint = document.getElementById('btnPrint');
-// Login elements
-const loginOverlay = document.getElementById('login');
-const loginUser = document.getElementById('loginUser');
-const loginPass = document.getElementById('loginPass');
-const btnLogin = document.getElementById('btnLogin');
-const loginStatus = document.getElementById('loginStatus');
+const btnLogout = document.getElementById('btnLogout');
 
 let lastSaleId = null;
 let products = [];
@@ -159,49 +154,18 @@ btnPrint.addEventListener('click', async () => {
   statusEl.textContent = res.ok ? `PDF: ${res.pdfPath}` : `Erreur: ${res.error}`;
 });
 
-// Initial load
-window.addEventListener('DOMContentLoaded', () => {
-  ensureSession().then(() => loadCategories().then(loadProducts));
+// Initial load with session guard
+window.addEventListener('DOMContentLoaded', async () => {
+  const res = await window.api.invoke('auth:getSession');
+  const user = res?.user;
+  if (!user) { window.location = 'login.html'; return; }
+  if (user.role === 'admin') { window.location = 'admin.html'; return; }
+  await loadCategories();
+  await loadProducts();
 });
 
-async function ensureSession() {
-  const res = await window.api.invoke('auth:getSession');
-  if (res?.user) {
-    hideLogin();
-  } else {
-    showLogin();
-  }
-}
-
-function showLogin() {
-  loginOverlay.classList.remove('hidden');
-  loginOverlay.setAttribute('aria-hidden', 'false');
-  loginUser.focus();
-}
-function hideLogin() {
-  loginOverlay.classList.add('hidden');
-  loginOverlay.setAttribute('aria-hidden', 'true');
-}
-
-btnLogin?.addEventListener('click', doLogin);
-loginPass?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
-
-async function doLogin() {
-  loginStatus.textContent = 'Connexion...';
-  const username = (loginUser.value||'').trim();
-  const password = loginPass.value||'';
-  const res = await window.api.invoke('auth:login', { username, password });
-  if (!res?.ok) {
-    loginStatus.textContent = res?.error || 'Échec de connexion';
-    return;
-  }
-  loginStatus.textContent = '';
-  const role = res.user?.role;
-  if (role === 'admin') {
-    window.location = 'admin.html';
-    return;
-  }
-  hideLogin();
-  // Reload data for session-based UI if needed (cashier)
-  loadCategories().then(loadProducts);
-}
+// Logout
+btnLogout?.addEventListener('click', async () => {
+  await window.api.invoke('auth:logout');
+  window.location = 'login.html';
+});

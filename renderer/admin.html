@@ -17,6 +17,34 @@
   </header>
   <main class="layout">
     <section class="catalog">
+      <h2>Session de travail</h2>
+      <div class="admin-form">
+        <button id="btnOpenSession" class="primary">Ouvrir la session</button>
+        <button id="btnCloseSession" class="secondary">Fermer la session</button>
+        <span id="sessionInfo" class="muted"></span>
+      </div>
+      <div class="admin-form">
+        <h3>Historique des sessions</h3>
+        <table class="admin-table" id="sessionsTable">
+          <thead><tr><th>#</th><th>Ouverte par</th><th>Ouverture</th><th>Fermeture</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="catalog">
+      <h2>Utilisateurs</h2>
+      <div class="admin-form">
+        <input id="uName" type="text" placeholder="Nom d'utilisateur (caissier)" />
+        <input id="uPass" type="password" placeholder="Mot de passe" />
+        <button id="btnAddCashier" class="primary">Ajouter caissier</button>
+        <div id="uStatus" class="muted"></div>
+      </div>
+      <table class="admin-table" id="usersTable">
+        <thead><tr><th>#</th><th>Nom</th><th>Rôle</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <section class="catalog">
       <h2>Produits</h2>
       <div class="admin-form">
         <input id="pName" type="text" placeholder="Nom du produit" />
@@ -36,6 +64,7 @@
         <input id="fromDate" type="date" />
         <input id="toDate" type="date" />
         <button id="btnLoadSales">Charger</button>
+        <button id="btnLoadAllSales" class="secondary">Historique complet</button>
         <div id="sStatus" class="muted"></div>
       </div>
       <table class="admin-table" id="salesTable">
@@ -44,6 +73,20 @@
       </table>
     </section>
   </main>
+  <!-- Ticket Detail Modal -->
+  <div id="ticketModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-dialog">
+      <h3>Détail du ticket</h3>
+      <div id="ticketInfo" class="muted"></div>
+      <table class="admin-table">
+        <thead><tr><th>Produit</th><th>Prix</th><th>Quantité</th><th>Total</th></tr></thead>
+        <tbody id="ticketItems"></tbody>
+      </table>
+      <div class="modal-actions">
+        <button id="closeTicket" class="secondary">Fermer</button>
+      </div>
+    </div>
+  </div>
   <script src="admin.js"></script>
 </body>
 </html>

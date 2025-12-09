@@ -7,19 +7,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="login" class="login hidden" aria-hidden="true">
-    <div class="login-card">
-      <h2>Connexion</h2>
-      <label>Utilisateur</label>
-      <input id="loginUser" type="text" placeholder="admin" />
-      <label>Mot de passe</label>
-      <input id="loginPass" type="password" placeholder="••••••" />
-      <div class="login-actions">
-        <button id="btnLogin" class="primary">Se connecter</button>
-      </div>
-      <div id="loginStatus" class="muted"></div>
-    </div>
-  </div>
   <header>
     <h1>Caisse Snack</h1>
     <div class="actions">
@@ -29,6 +16,7 @@
       </select>
       <button id="btnReload">Rafraîchir</button>
       <button id="btnPrint" disabled>Imprimer dernier ticket</button>
+      <button id="btnLogout" class="secondary">Déconnexion</button>
     </div>
   </header>
   <main class="layout">

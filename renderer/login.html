@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — Caisse Snack</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="login" aria-hidden="false">
+    <div class="login-card">
+      <h2>Connexion</h2>
+      <div class="role-chooser">
+        <button class="role" data-role="cashier">Caissier</button>
+        <button class="role" data-role="admin">Admin</button>
+      </div>
+      <label>Utilisateur</label>
+      <input id="loginUser" type="text" placeholder="admin ou caissier" />
+      <label>Mot de passe</label>
+      <input id="loginPass" type="password" placeholder="••••••" />
+      <div class="login-actions">
+        <button id="btnLogin" class="primary">Se connecter</button>
+      </div>
+      <div id="loginStatus" class="muted"></div>
+    </div>
+  </div>
+  <script src="login.js"></script>
+</body>
+</html>
