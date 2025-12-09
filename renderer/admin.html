@@ -80,6 +80,18 @@
         <tbody></tbody>
       </table>
     </section>
+    <section class="catalog">
+      <h2>⚙️ Paramètres</h2>
+      <div class="admin-form">
+        <label style="width: 100%; margin-bottom: 8px;">Mode d'authentification des caissiers</label>
+        <select id="authModeSelect" style="flex: 1;">
+          <option value="password">Mot de passe requis</option>
+          <option value="select">Sélection de profil</option>
+        </select>
+        <button id="btnSaveAuthMode" class="primary success">Enregistrer</button>
+        <div id="authStatus" class="muted"></div>
+      </div>
+    </section>
     <section class="cart">
       <h2>💳 Ventes</h2>
       <div class="admin-form">

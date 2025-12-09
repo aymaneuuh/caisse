@@ -55,3 +55,13 @@ CREATE TABLE IF NOT EXISTS sessions (
   closed_at TEXT,
   FOREIGN KEY (opened_by) REFERENCES users(id)
 );
+
+-- Configuration (app settings)
+CREATE TABLE IF NOT EXISTS config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+-- Initialize default config if not exists
+INSERT OR IGNORE INTO config (key, value) VALUES ('cashier_auth_mode', 'password');
+

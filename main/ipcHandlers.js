@@ -31,6 +31,31 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
     session.user = null;
     return { ok: true };
   });
+  
+  // Config - Get cashier auth mode
+  ipcMain.handle('config:getCashierAuthMode', () => {
+    try {
+      const row = db.get('SELECT value FROM config WHERE key=?', ['cashier_auth_mode']);
+      return { ok: true, mode: row?.value || 'password' };
+    } catch (e) {
+      return { ok: true, mode: 'password' };
+    }
+  });
+  
+  // Config - Set cashier auth mode (admin only)
+  ipcMain.handle('config:setCashierAuthMode', (event, { mode }) => {
+    requireAdmin();
+    if (!['password', 'select'].includes(mode)) {
+      return { ok: false, error: 'Mode invalide' };
+    }
+    try {
+      db.run('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)', ['cashier_auth_mode', mode]);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  });
+  
   ipcMain.handle('auth:login', (event, { username, password }) => {
     const row = db.get('SELECT id, username, password, role FROM users WHERE username=?', [username]);
     if (!row) return { ok: false, error: 'Utilisateur introuvable' };
@@ -50,6 +75,15 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
     session.user = { id: row.id, username: row.username, role: row.role };
     return { ok: true, user: session.user };
   });
+  
+  // Auth - Select cashier (no password mode)
+  ipcMain.handle('auth:selectCashier', (event, { userId }) => {
+    const row = db.get('SELECT id, username, role FROM users WHERE id=? AND role=?', [userId, 'cashier']);
+    if (!row) return { ok: false, error: 'Caissier introuvable' };
+    session.user = { id: row.id, username: row.username, role: row.role };
+    return { ok: true, user: session.user };
+  });
+  
   // Products CRUD
   ipcMain.handle('products:getAll', () => {
     return db.all('SELECT p.id, p.name, p.price, p.category_id, c.name AS category FROM products p LEFT JOIN categories c ON c.id = p.category_id ORDER BY p.name');

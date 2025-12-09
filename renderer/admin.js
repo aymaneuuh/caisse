@@ -2,6 +2,11 @@ const userBadge = document.getElementById('userBadge');
 const btnLogout = document.getElementById('btnLogout');
 const goPos = document.getElementById('goPos');
 
+// Settings
+const authModeSelect = document.getElementById('authModeSelect');
+const btnSaveAuthMode = document.getElementById('btnSaveAuthMode');
+const authStatus = document.getElementById('authStatus');
+
 const pName = document.getElementById('pName');
 const pPrice = document.getElementById('pPrice');
 const pCategory = document.getElementById('pCategory');
@@ -43,6 +48,13 @@ async function ensureAdminSession() {
     return false;
   }
   return true;
+}
+
+async function loadAuthMode() {
+  const res = await window.api.invoke('config:getCashierAuthMode');
+  if (res?.ok) {
+    authModeSelect.value = res.mode || 'password';
+  }
 }
 
 async function loadCategories() {
@@ -286,6 +298,19 @@ async function loadUsers() {
   });
 }
 
+// Auth mode settings
+btnSaveAuthMode.addEventListener('click', async () => {
+  authStatus.textContent = 'Sauvegarde...';
+  const mode = authModeSelect.value;
+  const res = await window.api.invoke('config:setCashierAuthMode', { mode });
+  if (res?.ok) {
+    authStatus.textContent = 'Paramètres sauvegardés.';
+    setTimeout(() => { authStatus.textContent = ''; }, 2000);
+  } else {
+    authStatus.textContent = res?.error || 'Erreur lors de la sauvegarde';
+  }
+});
+
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await ensureAdminSession())) return;
   await refreshWorkSessionInfo();
@@ -293,5 +318,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadUsers();
   await loadCategories();
   await loadProducts();
+  await loadAuthMode();
   const t = todayStr(new Date()); fromDate.value = t; toDate.value = t; await loadSales();
 });
