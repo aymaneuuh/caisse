@@ -22,7 +22,7 @@ npm run dist
 Génère un installeur `.exe` (NSIS) dans `dist/`.
 
 ## Fonctionnalités
-- SQLite local via `better-sqlite3`
+- SQLite local via `sql.js` (WebAssembly, no native build required)
 - IPC CRUD: produits, catégories, ventes, utilisateurs
 - Impression ticket PDF via PDFKit + génération HTML (placeholder ESC/POS)
 - UI minimale HTML/CSS/JS

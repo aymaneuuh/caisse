@@ -4,8 +4,8 @@ const PDFDocument = require('pdfkit');
 const dayjs = require('dayjs');
 
 function buildTicketHtml(db, saleId) {
-  const sale = db.prepare('SELECT * FROM sales WHERE id=?').get(saleId);
-  const items = db.prepare('SELECT si.quantity, si.price, p.name FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id=?').all(saleId);
+  const sale = db.get('SELECT * FROM sales WHERE id=?', [saleId]);
+  const items = db.all('SELECT si.quantity, si.price, p.name FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id=?', [saleId]);
   const lines = items.map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.price.toFixed(2)}€</td><td>${(i.price*i.quantity).toFixed(2)}€</td></tr>`).join('');
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:4px}</style></head><body>
     <h3>Caisse Snack</h3>
@@ -20,7 +20,7 @@ async function printTicket(db, saleId) {
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   const pdfPath = path.join(outDir, `ticket-${saleId}.pdf`);
 
-  const sale = db.prepare('SELECT * FROM sales WHERE id=?').get(saleId);
+  const sale = db.get('SELECT * FROM sales WHERE id=?', [saleId]);
   if (!sale) return { ok: false, error: 'Sale not found' };
 
   // Generate PDF with PDFKit
@@ -32,7 +32,7 @@ async function printTicket(db, saleId) {
   doc.text(`Date: ${dayjs(sale.created_at).format('YYYY-MM-DD HH:mm')}`);
   doc.moveDown();
 
-  const items = db.prepare('SELECT si.quantity, si.price, p.name FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id=?').all(saleId);
+  const items = db.all('SELECT si.quantity, si.price, p.name FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id=?', [saleId]);
   items.forEach(i => {
     doc.text(`${i.name} x${i.quantity} @ ${i.price.toFixed(2)}€  = ${(i.price*i.quantity).toFixed(2)}€`);
   });

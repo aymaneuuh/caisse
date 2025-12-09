@@ -9,10 +9,11 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder build",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.1",
+    "sql.js": "^1.12.0",
     "dayjs": "^1.11.13",
     "pdfkit": "^0.15.0"
   },

@@ -26,8 +26,8 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   // Ensure DB exists and migrations applied
-  const db = getDb();
-  await applyMigrationsAndSeed(db);
+  const db = await getDb();
+  await applyMigrationsAndSeed();
 
   // Register IPC handlers
   registerIpcHandlers(ipcMain, db);

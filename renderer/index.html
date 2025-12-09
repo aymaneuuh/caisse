@@ -9,13 +9,32 @@
 <body>
   <header>
     <h1>Caisse Snack</h1>
-    <button id="btnLoad">Charger les produits</button>
-    <button id="btnFakeSale">Créer vente test</button>
-    <button id="btnPrint">Imprimer ticket</button>
+    <div class="actions">
+      <input id="search" type="search" placeholder="Rechercher un produit..." />
+      <select id="category">
+        <option value="">Toutes catégories</option>
+      </select>
+      <button id="btnReload">Rafraîchir</button>
+      <button id="btnPrint" disabled>Imprimer dernier ticket</button>
+    </div>
   </header>
-  <main>
-    <ul id="products"></ul>
-    <div id="status"></div>
+  <main class="layout">
+    <section class="catalog">
+      <h2>Produits</h2>
+      <ul id="products" class="product-list"></ul>
+    </section>
+    <section class="cart">
+      <h2>Panier</h2>
+      <ul id="cart"></ul>
+      <div class="cart-footer">
+        <div class="total">Total: <span id="total">0.00€</span></div>
+        <div class="cart-actions">
+          <button id="btnClear" class="secondary">Vider</button>
+          <button id="btnCheckout" class="primary" disabled>Encaisser</button>
+        </div>
+        <div id="status"></div>
+      </div>
+    </section>
   </main>
   <script src="app.js"></script>
 </body>
