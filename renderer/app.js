@@ -7,13 +7,12 @@ const categoryEl = document.getElementById('category');
 const btnReload = document.getElementById('btnReload');
 const btnCheckout = document.getElementById('btnCheckout');
 const btnClear = document.getElementById('btnClear');
-const btnPrint = document.getElementById('btnPrint');
 const btnLogout = document.getElementById('btnLogout');
 
 let lastSaleId = null;
 let products = [];
 let categories = [];
-let cart = new Map(); // id -> { id, name, price, qty }
+let cart = new Map();
 
 function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
 
@@ -67,13 +66,17 @@ function renderCart() {
   cartEl.querySelectorAll('button[data-inc]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = Number(btn.getAttribute('data-inc'));
-      const item = cart.get(id); if (!item) return; updateQty(id, item.qty + 1);
+      const item = cart.get(id);
+      if (!item) return;
+      updateQty(id, item.qty + 1);
     });
   });
   cartEl.querySelectorAll('button[data-dec]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = Number(btn.getAttribute('data-dec'));
-      const item = cart.get(id); if (!item) return; updateQty(id, Math.max(1, item.qty - 1));
+      const item = cart.get(id);
+      if (!item) return;
+      updateQty(id, Math.max(1, item.qty - 1));
     });
   });
   cartEl.querySelectorAll('button[data-remove]').forEach(btn => {
@@ -131,11 +134,12 @@ function applyFilter() {
   renderProducts(list);
 }
 
-// Events
+// Event listeners
 btnReload.addEventListener('click', loadProducts);
 searchEl.addEventListener('input', applyFilter);
 categoryEl.addEventListener('change', applyFilter);
 btnClear.addEventListener('click', clearCart);
+
 btnCheckout.addEventListener('click', async () => {
   const items = Array.from(cart.values()).map(i => ({ product_id: i.id, quantity: i.qty }));
   if (items.length === 0) return;
@@ -143,29 +147,28 @@ btnCheckout.addEventListener('click', async () => {
   const { ok, saleId, error } = await window.api.invoke('sales:create', { items, cashier_id: 1 });
   if (!ok) { statusEl.textContent = `Erreur: ${error||'vente'}`; return; }
   lastSaleId = saleId;
-  btnPrint.disabled = false;
   statusEl.textContent = `Vente #${saleId} créée.`;
   clearCart();
 });
 
-btnPrint.addEventListener('click', async () => {
-  if (!lastSaleId) { statusEl.textContent = 'Aucun ticket à imprimer.'; return; }
-  const res = await window.api.invoke('printer:printTicket', lastSaleId);
-  statusEl.textContent = res.ok ? `PDF: ${res.pdfPath}` : `Erreur: ${res.error}`;
+btnLogout.addEventListener('click', async () => {
+  await window.api.invoke('auth:logout');
+  window.location = 'login.html';
 });
 
-// Initial load with session guard
+// Session guard and initial load
 window.addEventListener('DOMContentLoaded', async () => {
   const res = await window.api.invoke('auth:getSession');
   const user = res?.user;
-  if (!user) { window.location = 'login.html'; return; }
-  if (user.role === 'admin') { window.location = 'admin.html'; return; }
+  if (!user) {
+    window.location = 'login.html';
+    return;
+  }
+  if (user.role === 'admin') {
+    window.location = 'admin.html';
+    return;
+  }
   await loadCategories();
   await loadProducts();
-});
-
-// Logout
-btnLogout?.addEventListener('click', async () => {
-  await window.api.invoke('auth:logout');
-  window.location = 'login.html';
+  statusEl.textContent = '';
 });

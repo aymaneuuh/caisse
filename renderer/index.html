@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Caisse Snack</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -10,18 +10,17 @@
   <header>
     <h1>Caisse Snack</h1>
     <div class="actions">
-      <input id="search" type="search" placeholder="Rechercher un produit..." />
+      <input id="search" type="search" placeholder="Chercher..." />
       <select id="category">
         <option value="">Toutes catégories</option>
       </select>
-      <button id="btnReload">Rafraîchir</button>
-      <button id="btnPrint" disabled>Imprimer dernier ticket</button>
+      <button id="btnReload" class="secondary">Rafraîchir</button>
       <button id="btnLogout" class="secondary">Déconnexion</button>
     </div>
   </header>
   <main class="layout">
     <section class="catalog">
-      <h2>Produits</h2>
+      <h2>Catalogue</h2>
       <ul id="products" class="product-list"></ul>
     </section>
     <section class="cart">
@@ -42,27 +41,27 @@
     <div class="modal-dialog">
       <h3>Encaissement</h3>
       <div class="pay-grid">
-        <div class="totals">
+        <div>
           <div>Total à payer</div>
           <div id="payTotal" class="amount">0.00€</div>
         </div>
-        <div class="input">
-          <label for="cashInput">Espèces reçues</label>
-          <input id="cashInput" type="number" min="0" step="0.01" value="0" />
+        <div>
+          <label for="cashInput" style="display: block; font-weight: 600; margin-bottom: 8px;">Espèces reçues</label>
+          <input id="cashInput" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
           <div class="change">Rendu: <span id="changeValue">0.00€</span></div>
           <div class="quick">
-            <button data-cash="exact">Exact</button>
-            <button data-cash="+0.5">+0,50</button>
-            <button data-cash="+1">+1</button>
-            <button data-cash="+2">+2</button>
-            <button data-cash="+5">+5</button>
-            <button data-cash="+10">+10</button>
+            <button data-cash="exact" class="warning">Exact</button>
+            <button data-cash="+0.5" class="success">+0,50</button>
+            <button data-cash="+1" class="success">+1€</button>
+            <button data-cash="+2" class="success">+2€</button>
+            <button data-cash="+5" class="success">+5€</button>
+            <button data-cash="+10" class="success">+10€</button>
           </div>
         </div>
       </div>
       <div class="modal-actions">
         <button id="btnCancelPay" class="secondary">Annuler (Esc)</button>
-        <button id="btnConfirmPay" class="primary">Valider (Entrée)</button>
+        <button id="btnConfirmPay" class="primary success">Valider (Entrée)</button>
       </div>
     </div>
   </div>
