@@ -21,9 +21,10 @@ function renderProducts(list) {
     <li>
       <div>
         <div>${p.name}</div>
-        <div class="meta">${formatPrice(p.price)} ${p.category ? `· ${p.category}` : ''}</div>
+        <div class="price">${formatPrice(p.price)}</div>
+        <div class="meta">${p.category || 'Catégorie'}</div>
       </div>
-      <button data-add="${p.id}" class="primary">Ajouter</button>
+      <button data-add="${p.id}" class="primary">+ Ajouter</button>
     </li>
   `).join('');
 
@@ -40,15 +41,17 @@ function renderCart() {
   const items = Array.from(cart.values());
   cartEl.innerHTML = items.map(i => `
     <li>
-      <div>${i.name}</div>
+      <div>
+        <div class="item-name">${i.name}</div>
+        <div class="item-price">${formatPrice(i.price)} × ${i.qty}</div>
+      </div>
       <div class="qty-group">
-        <button class="icon" data-dec="${i.id}">-</button>
+        <button class="icon" data-dec="${i.id}">−</button>
         <input class="qty" data-qty="${i.id}" type="number" min="1" value="${i.qty}" />
         <button class="icon" data-inc="${i.id}">+</button>
       </div>
-      <div>${formatPrice(i.price)}</div>
-      <div>${formatPrice(i.price * i.qty)}</div>
-      <button class="icon" data-remove="${i.id}">✕</button>
+      <div style="font-weight: 700; color: var(--primary); text-align: right;">${formatPrice(i.price * i.qty)}</div>
+      <button class="icon danger" data-remove="${i.id}" style="background: linear-gradient(135deg, #ef4444, #dc2626); min-width: 44px;">✕</button>
     </li>
   `).join('');
 

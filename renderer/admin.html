@@ -3,54 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Caisse Snack</title>
+  <title>Admin — Caisse Pro</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    header h1::before {
+      content: '⚙️ ';
+      margin-right: 8px;
+    }
+    #goPos {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: #fff;
+      border: none;
+    }
+    #goPos:hover {
+      background: linear-gradient(135deg, var(--success-dark), #047857);
+    }
+    #userBadge {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      padding: 8px 16px;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Administration</h1>
+    <h1>Caisse Pro - Administration</h1>
     <div class="actions">
-      <button id="goPos">Aller à la caisse</button>
-      <span id="userBadge" class="muted"></span>
-      <button id="btnLogout" class="secondary">Déconnexion</button>
+      <button id="goPos" class="success">💰 Aller à la caisse</button>
+      <span id="userBadge"></span>
+      <button id="btnLogout" class="danger">Déconnexion</button>
     </div>
   </header>
   <main class="layout">
     <section class="catalog">
-      <h2>Session de travail</h2>
+      <h2>⏰ Session de travail</h2>
       <div class="admin-form">
-        <button id="btnOpenSession" class="primary">Ouvrir la session</button>
-        <button id="btnCloseSession" class="secondary">Fermer la session</button>
-        <span id="sessionInfo" class="muted"></span>
+        <button id="btnOpenSession" class="primary success">Ouvrir la session</button>
+        <button id="btnCloseSession" class="warning">Fermer la session</button>
+        <span id="sessionInfo" class="muted" style="flex: 1; text-align: right; margin-left: auto;"></span>
       </div>
       <div class="admin-form">
-        <h3>Historique des sessions</h3>
-        <table class="admin-table" id="sessionsTable">
-          <thead><tr><th>#</th><th>Ouverte par</th><th>Ouverture</th><th>Fermeture</th><th>Actions</th></tr></thead>
-          <tbody></tbody>
-        </table>
+        <h3 style="width: 100%; margin-top: 0;">Historique des sessions</h3>
       </div>
-    </section>
-    <section class="catalog">
-      <h2>Utilisateurs</h2>
-      <div class="admin-form">
-        <input id="uName" type="text" placeholder="Nom d'utilisateur (caissier)" />
-        <input id="uPass" type="password" placeholder="Mot de passe" />
-        <button id="btnAddCashier" class="primary">Ajouter caissier</button>
-        <div id="uStatus" class="muted"></div>
-      </div>
-      <table class="admin-table" id="usersTable">
-        <thead><tr><th>#</th><th>Nom</th><th>Rôle</th><th>Actions</th></tr></thead>
+      <table class="admin-table" id="sessionsTable">
+        <thead><tr><th>#</th><th>Ouverte par</th><th>Ouverture</th><th>Fermeture</th><th>Actions</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
     <section class="catalog">
-      <h2>Produits</h2>
+      <h2>👥 Utilisateurs (Caissiers)</h2>
+      <div class="admin-form">
+        <input id="uName" type="text" placeholder="Nom d'utilisateur" />
+        <input id="uPass" type="password" placeholder="Mot de passe" />
+        <button id="btnAddCashier" class="primary success">+ Ajouter</button>
+        <div id="uStatus" class="muted"></div>
+      </div>
+      <table class="admin-table" id="usersTable">
+        <thead><tr><th>Nom</th><th>Rôle</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <section class="catalog">
+      <h2>📦 Produits</h2>
       <div class="admin-form">
         <input id="pName" type="text" placeholder="Nom du produit" />
         <input id="pPrice" type="number" min="0" step="0.01" placeholder="Prix" />
         <select id="pCategory"></select>
-        <button id="btnAddProduct" class="primary">Ajouter</button>
+        <button id="btnAddProduct" class="primary success">+ Ajouter</button>
         <div id="pStatus" class="muted"></div>
       </div>
       <table class="admin-table" id="productTable">
@@ -59,12 +81,12 @@
       </table>
     </section>
     <section class="cart">
-      <h2>Ventes (aujourd'hui)</h2>
+      <h2>💳 Ventes</h2>
       <div class="admin-form">
         <input id="fromDate" type="date" />
         <input id="toDate" type="date" />
-        <button id="btnLoadSales">Charger</button>
-        <button id="btnLoadAllSales" class="secondary">Historique complet</button>
+        <button id="btnLoadSales" class="primary">Charger</button>
+        <button id="btnLoadAllSales" class="secondary">📋 Historique complet</button>
         <div id="sStatus" class="muted"></div>
       </div>
       <table class="admin-table" id="salesTable">
@@ -76,8 +98,8 @@
   <!-- Ticket Detail Modal -->
   <div id="ticketModal" class="modal hidden" aria-hidden="true">
     <div class="modal-dialog">
-      <h3>Détail du ticket</h3>
-      <div id="ticketInfo" class="muted"></div>
+      <h3>📋 Détail du ticket</h3>
+      <div id="ticketInfo" class="muted" style="margin-bottom: 16px; padding: 12px; background: var(--bg); border-radius: 10px;"></div>
       <table class="admin-table">
         <thead><tr><th>Produit</th><th>Prix</th><th>Quantité</th><th>Total</th></tr></thead>
         <tbody id="ticketItems"></tbody>

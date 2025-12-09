@@ -3,25 +3,159 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Connexion — Caisse Snack</title>
+  <title>Connexion — Caisse Pro</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    }
+    .login {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    .login-card h2 {
+      margin: 0 0 12px 0;
+      font-size: 36px;
+      font-weight: 800;
+      text-align: center;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .login-card > div:nth-child(2) {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    .role-chooser {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .role-chooser .role {
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-hover);
+      color: var(--fg);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .role-chooser .role:hover {
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+    .role-chooser .role.active {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, var(--primary), #0284c7);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    .login-card label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 16px;
+      transition: all 0.25s;
+    }
+    .login-card input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: var(--surface-hover);
+    }
+    .login-actions {
+      margin-top: 28px;
+    }
+    .login-actions button {
+      width: 100%;
+      min-height: 56px;
+      font-size: 18px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #0284c7);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    .login-actions button:hover {
+      background: linear-gradient(135deg, #1e40af, #0369a1);
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+    }
+    .login-actions button:active {
+      transform: translateY(0);
+    }
+    #loginStatus {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 14px;
+      min-height: 20px;
+    }
+    #loginStatus.error {
+      color: #ef4444;
+      font-weight: 600;
+    }
+    #loginStatus.success {
+      color: #10b981;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <div class="login" aria-hidden="false">
     <div class="login-card">
-      <h2>Connexion</h2>
+      <h2>Caisse Pro</h2>
+      <div>Système de paiement moderne</div>
       <div class="role-chooser">
-        <button class="role" data-role="cashier">Caissier</button>
+        <button class="role active" data-role="cashier">Caissier</button>
         <button class="role" data-role="admin">Admin</button>
       </div>
       <label>Utilisateur</label>
-      <input id="loginUser" type="text" placeholder="admin ou caissier" />
+      <input id="loginUser" type="text" placeholder="Entrez votre nom" />
       <label>Mot de passe</label>
       <input id="loginPass" type="password" placeholder="••••••" />
       <div class="login-actions">
-        <button id="btnLogin" class="primary">Se connecter</button>
+        <button id="btnLogin" class="primary">Accéder</button>
       </div>
-      <div id="loginStatus" class="muted"></div>
+      <div id="loginStatus"></div>
     </div>
   </div>
   <script src="login.js"></script>
