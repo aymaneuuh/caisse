@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Caisse Snack</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Administration</h1>
+    <div class="actions">
+      <button id="goPos">Aller à la caisse</button>
+      <span id="userBadge" class="muted"></span>
+      <button id="btnLogout" class="secondary">Déconnexion</button>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="catalog">
+      <h2>Produits</h2>
+      <div class="admin-form">
+        <input id="pName" type="text" placeholder="Nom du produit" />
+        <input id="pPrice" type="number" min="0" step="0.01" placeholder="Prix" />
+        <select id="pCategory"></select>
+        <button id="btnAddProduct" class="primary">Ajouter</button>
+        <div id="pStatus" class="muted"></div>
+      </div>
+      <table class="admin-table" id="productTable">
+        <thead><tr><th>Nom</th><th>Prix</th><th>Catégorie</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <section class="cart">
+      <h2>Ventes (aujourd'hui)</h2>
+      <div class="admin-form">
+        <input id="fromDate" type="date" />
+        <input id="toDate" type="date" />
+        <button id="btnLoadSales">Charger</button>
+        <div id="sStatus" class="muted"></div>
+      </div>
+      <table class="admin-table" id="salesTable">
+        <thead><tr><th>#</th><th>Total</th><th>Date</th><th>Caissier</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>

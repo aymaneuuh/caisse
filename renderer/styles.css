@@ -21,6 +21,12 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; padding: 16px; }
 .catalog, .cart { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .catalog h2, .cart h2 { margin: 0 0 8px 0; font-size: 16px; }
+/* Admin tables/forms */
+.admin-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.admin-form input, .admin-form select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; }
+.admin-table input { width: 100%; }
 
 .product-list { list-style: none; padding: 0; margin: 0; max-height: calc(100vh - 200px); overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .product-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #fff; }

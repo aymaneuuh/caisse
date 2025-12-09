@@ -196,7 +196,12 @@ async function doLogin() {
     return;
   }
   loginStatus.textContent = '';
+  const role = res.user?.role;
+  if (role === 'admin') {
+    window.location = 'admin.html';
+    return;
+  }
   hideLogin();
-  // Reload data for session-based UI if needed
+  // Reload data for session-based UI if needed (cashier)
   loadCategories().then(loadProducts);
 }
