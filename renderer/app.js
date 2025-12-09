@@ -8,11 +8,22 @@ const btnReload = document.getElementById('btnReload');
 const btnCheckout = document.getElementById('btnCheckout');
 const btnClear = document.getElementById('btnClear');
 const btnLogout = document.getElementById('btnLogout');
+const checkoutModal = document.getElementById('checkoutModal');
+const payTotalEl = document.getElementById('payTotal');
+const cashInput = document.getElementById('cashInput');
+const changeValue = document.getElementById('changeValue');
+const btnCancelPay = document.getElementById('btnCancelPay');
+const btnConfirmPay = document.getElementById('btnConfirmPay');
+const paymentMethod = document.getElementById('paymentMethod');
+const cashArea = document.getElementById('cashArea');
+const quickCashButtons = document.querySelectorAll('button[data-cash]');
 
 let lastSaleId = null;
 let products = [];
 let categories = [];
 let cart = new Map();
+let cashierId = null;
+let currentTotal = 0;
 
 function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
 
@@ -115,6 +126,36 @@ function clearCart() {
   renderCart();
 }
 
+function openCheckoutModal(total) {
+  currentTotal = total;
+  payTotalEl.textContent = formatPrice(total);
+  paymentMethod.value = 'cash';
+  cashArea.style.display = 'block';
+  cashInput.value = Number(total).toFixed(2);
+  updateChange();
+  updatePaymentUI();
+  checkoutModal.style.display = 'flex';
+}
+
+function closeCheckoutModal() {
+  checkoutModal.style.display = 'none';
+}
+
+function updateChange() {
+  const cash = Number(cashInput.value || 0);
+  const change = Math.max(0, cash - currentTotal);
+  changeValue.textContent = formatPrice(change);
+}
+
+function updatePaymentUI() {
+  const isCash = paymentMethod.value === 'cash';
+  cashArea.style.display = isCash ? 'block' : 'none';
+  if (!isCash) {
+    changeValue.textContent = formatPrice(0);
+  }
+  btnConfirmPay.textContent = isCash ? 'Encaisser (Espèces)' : 'Encaisser (Carte)';
+}
+
 async function loadProducts() {
   statusEl.textContent = 'Chargement...';
   products = await window.api.invoke('products:getAll');
@@ -143,15 +184,73 @@ searchEl.addEventListener('input', applyFilter);
 categoryEl.addEventListener('change', applyFilter);
 btnClear.addEventListener('click', clearCart);
 
-btnCheckout.addEventListener('click', async () => {
+btnCheckout.addEventListener('click', () => {
+  const items = Array.from(cart.values());
+  if (!items.length) return;
+  const total = items.reduce((s, x) => s + x.price * x.qty, 0);
+  openCheckoutModal(total);
+});
+
+paymentMethod.addEventListener('change', () => {
+  updatePaymentUI();
+  if (paymentMethod.value === 'cash') updateChange();
+});
+
+cashInput.addEventListener('input', updateChange);
+
+quickCashButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (paymentMethod.value !== 'cash') return;
+    const val = btn.getAttribute('data-cash');
+    if (val === 'exact') {
+      cashInput.value = Number(currentTotal).toFixed(2);
+    } else {
+      const increment = Number(val.replace('+', ''));
+      const current = Number(cashInput.value || 0);
+      cashInput.value = (current + increment).toFixed(2);
+    }
+    updateChange();
+  });
+});
+
+btnCancelPay.addEventListener('click', closeCheckoutModal);
+
+btnConfirmPay.addEventListener('click', async () => {
   const items = Array.from(cart.values()).map(i => ({ product_id: i.id, quantity: i.qty }));
-  if (items.length === 0) return;
+  if (!items.length) return;
+
+  const method = paymentMethod.value;
+  const cashReceived = Number(cashInput.value || 0);
+  if (method === 'cash' && cashReceived < currentTotal) {
+    statusEl.textContent = 'Montant insuffisant pour encaisser.';
+    return;
+  }
+
   statusEl.textContent = 'Encaissement...';
-  const { ok, saleId, error } = await window.api.invoke('sales:create', { items, cashier_id: 1 });
+  const payload = {
+    items,
+    cashier_id: cashierId || 1,
+    payment_method: method,
+    cash_received: method === 'cash' ? cashReceived : null,
+    change: method === 'cash' ? Math.max(0, cashReceived - currentTotal) : 0,
+  };
+
+  const { ok, saleId, error } = await window.api.invoke('sales:create', payload);
   if (!ok) { statusEl.textContent = `Erreur: ${error||'vente'}`; return; }
   lastSaleId = saleId;
-  statusEl.textContent = `Vente #${saleId} créée.`;
+  statusEl.textContent = `Vente #${saleId} créée (${method === 'cash' ? 'Espèces' : 'Carte'}).`;
+  
+  // Print ticket
+  statusEl.textContent = 'Impression du ticket...';
+  const printRes = await window.api.invoke('printer:printTicket', saleId);
+  if (printRes?.ok) {
+    statusEl.textContent = `Ticket #${saleId} imprimé.`;
+  } else {
+    statusEl.textContent = `Vente créée mais erreur d'impression: ${printRes?.error || 'inconnue'}`;
+  }
+  
   clearCart();
+  closeCheckoutModal();
 });
 
 btnLogout.addEventListener('click', async () => {
@@ -171,6 +270,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.location = 'admin.html';
     return;
   }
+  cashierId = user.id;
   await loadCategories();
   await loadProducts();
   statusEl.textContent = '';

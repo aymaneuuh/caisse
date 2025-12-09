@@ -35,10 +35,13 @@ async function initCashierAuth() {
   
   if (cashierAuthMode === 'select') {
     // Load list of caissiers
-    const users = await window.api.invoke('users:getAll');
-    if (users?.ok && users.users) {
-      const cashiers = users.users.filter(u => u.role === 'cashier');
-      cashierSelect.innerHTML = cashiers.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+    const users = await window.api.invoke('users:getAllCashiers');
+    if (users?.ok && users.cashiers) {
+      const cashiers = users.cashiers;
+      cashierSelect.innerHTML = '<option value="">-- Sélectionnez un caissier --</option>' + 
+        cashiers.map(u => `<option value="${u.id}">${u.username}</option>`).join('');
+    } else {
+      cashierSelect.innerHTML = '<option value="">Erreur de chargement</option>';
     }
     passwordMode.style.display = 'none';
     cashierSelector.classList.add('active');

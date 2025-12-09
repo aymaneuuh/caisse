@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Caisse Pro</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
@@ -62,9 +62,14 @@
         <div>
           <div>Total à payer</div>
           <div id="payTotal" class="amount">0.00€</div>
+          <label for="paymentMethod" style="display:block; font-weight:600; margin-top:12px;">Mode de paiement</label>
+          <select id="paymentMethod">
+            <option value="cash">Espèces</option>
+            <option value="card">Carte</option>
+          </select>
         </div>
-        <div>
-          <label for="cashInput" style="display: block; font-weight: 600; margin-bottom: 8px;">Espèces reçues</label>
+        <div id="cashArea">
+          <label for="cashInput" style="display: block; font-weight: 600; margin-bottom: 8px;">Montant remis</label>
           <input id="cashInput" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
           <div class="change">Rendu: <span id="changeValue">0.00€</span></div>
           <div class="quick">

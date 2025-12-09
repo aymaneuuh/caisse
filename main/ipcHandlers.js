@@ -122,6 +122,13 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
   ipcMain.handle('users:getAll', () => {
     return db.all('SELECT id, username, role FROM users ORDER BY username');
   });
+  
+  // Get all cashiers (public - no auth required for login page)
+  ipcMain.handle('users:getAllCashiers', () => {
+    const cashiers = db.all('SELECT id, username FROM users WHERE role=? ORDER BY username', ['cashier']);
+    return { ok: true, cashiers: cashiers || [] };
+  });
+  
   ipcMain.handle('users:add', (event, { username, password, role }) => {
     requireAdmin();
     const uname = (username||'').trim();
@@ -161,9 +168,18 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
 
   // Sales
   ipcMain.handle('sales:create', (event, { items, cashier_id }) => {
+    const cashierId = Number(cashier_id);
+    if (!cashierId) return { ok: false, error: 'Caissier invalide' };
+    if (!Array.isArray(items) || items.length === 0) return { ok: false, error: 'Panier vide' };
+
+    // Auto-open a session on first ticket if none is open
     if (!currentWorkSessionId) {
-      return { ok: false, error: 'Aucune session ouverte. Contactez un administrateur.' };
+      const openedAt = dayjs().toISOString();
+      db.run('INSERT INTO sessions (opened_by, opened_at) VALUES (?, ?)', [cashierId, openedAt]);
+      currentWorkSessionId = db.get('SELECT last_insert_rowid() as id').id;
+      db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['session:auto_open', cashierId, openedAt]);
     }
+
     const now = dayjs().toISOString();
     const saleId = db.transaction(() => {
       let total = 0;
@@ -172,14 +188,14 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
         const unitPrice = it.price ?? p.price;
         total += unitPrice * it.quantity;
       }
-      db.run('INSERT INTO sales (total, created_at, cashier_id, session_id) VALUES (?, ?, ?, ?)', [total, now, cashier_id, currentWorkSessionId]);
+      db.run('INSERT INTO sales (total, created_at, cashier_id, session_id) VALUES (?, ?, ?, ?)', [total, now, cashierId, currentWorkSessionId]);
       const saleId = db.get('SELECT last_insert_rowid() as id').id;
       for (const it of items) {
         const p = db.get('SELECT id, price FROM products WHERE id=?', [it.product_id]);
         const unitPrice = it.price ?? p.price;
         db.run('INSERT INTO sale_items (sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?)', [saleId, it.product_id, it.quantity, unitPrice]);
       }
-      db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['sale:create', cashier_id, now]);
+      db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['sale:create', cashierId, now]);
       return saleId;
     });
     return { ok: true, saleId };
@@ -265,6 +281,28 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
     return db.all('SELECT * FROM sessions ORDER BY opened_at DESC');
   });
   ipcMain.handle('workSession:getSales', (event, sessionId) => {
-    return db.all('SELECT * FROM sales WHERE session_id=? ORDER BY created_at DESC', [sessionId]);
+    const sid = Number(sessionId);
+    if (!sid) return [];
+    const sessionRow = db.get('SELECT * FROM sessions WHERE id=?', [sid]);
+    if (!sessionRow) return [];
+
+    const start = sessionRow.opened_at;
+    const end = sessionRow.closed_at || dayjs().toISOString();
+
+    // Union: session_id match OR within time window (covers legacy nulls)
+    const rows = db.all(
+      'SELECT * FROM sales WHERE (session_id=? OR (created_at BETWEEN ? AND ?)) ORDER BY created_at DESC',
+      [sid, start, end]
+    );
+
+    // Deduplicate by id in case of overlap
+    const seen = new Set();
+    const uniq = [];
+    for (const r of rows) {
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
+      uniq.push(r);
+    }
+    return uniq;
   });
 };
