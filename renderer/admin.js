@@ -18,6 +18,7 @@ const fromDate = document.getElementById('fromDate');
 const toDate = document.getElementById('toDate');
 const btnLoadSales = document.getElementById('btnLoadSales');
 const btnLoadAllSales = document.getElementById('btnLoadAllSales');
+const btnExportSales = document.getElementById('btnExportSales');
 const sStatus = document.getElementById('sStatus');
 const salesTable = document.getElementById('salesTable').querySelector('tbody');
 // Work session controls
@@ -34,6 +35,363 @@ const uStatus = document.getElementById('uStatus');
 const usersTable = document.getElementById('usersTable').querySelector('tbody');
 
 function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
+
+// Setup section navigation
+function setupNavigation() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active from all buttons
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Hide all sections
+      document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+      
+      // Show selected section
+      const sectionId = btn.getAttribute('data-section');
+      const section = document.getElementById(`section-${sectionId}`);
+      if (section) {
+        section.classList.add('active');
+      }
+      
+      // Load data for section if needed
+      if (sectionId === 'products') loadProducts();
+      else if (sectionId === 'users') loadUsers();
+      else if (sectionId === 'sales') {
+        const today = new Date();
+        fromDate.valueAsDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        toDate.valueAsDate = today;
+      }
+      else if (sectionId === 'stats') {
+        loadStatistics();
+      }
+      else if (sectionId === 'dashboard') {
+        loadDashboard();
+      }
+    });
+  });
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  try {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Today's sales
+    const todaySales = await window.api.invoke('sales:getByDate', {
+      from: todayStart.toISOString(),
+      to: todayEnd.toISOString()
+    });
+
+    const todayTotal = todaySales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const todayCount = todaySales.length;
+    const todayAvg = todayCount > 0 ? todayTotal / todayCount : 0;
+
+    document.getElementById('dashTodaySales').textContent = todayTotal.toFixed(2) + '€';
+    document.getElementById('dashTodayTickets').textContent = todayCount;
+    document.getElementById('dashAvgBasket').textContent = todayAvg.toFixed(2) + '€';
+
+    // Current session status
+    const currentSession = await window.api.invoke('workSession:getCurrent');
+    if (currentSession?.session) {
+      document.getElementById('dashSessionStatus').textContent = 'Ouverte';
+      document.getElementById('dashSessionStatus').style.color = '#4ade80';
+    } else {
+      document.getElementById('dashSessionStatus').textContent = 'Fermée';
+      document.getElementById('dashSessionStatus').style.color = '#f87171';
+    }
+
+    // 7 days stats
+    const sales7d = await window.api.invoke('sales:getByDate', {
+      from: sevenDaysAgo.toISOString(),
+      to: todayEnd.toISOString()
+    });
+    const total7d = sales7d.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const count7d = sales7d.length;
+    const avg7d = count7d > 0 ? total7d / count7d : 0;
+
+    document.getElementById('dash7dSales').textContent = total7d.toFixed(2) + '€';
+    document.getElementById('dash7dTickets').textContent = count7d;
+    document.getElementById('dash7dAvg').textContent = avg7d.toFixed(2) + '€';
+
+    // 30 days stats
+    const sales30d = await window.api.invoke('sales:getByDate', {
+      from: thirtyDaysAgo.toISOString(),
+      to: todayEnd.toISOString()
+    });
+    const total30d = sales30d.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const count30d = sales30d.length;
+    const avg30d = count30d > 0 ? total30d / count30d : 0;
+
+    document.getElementById('dash30dSales').textContent = total30d.toFixed(2) + '€';
+    document.getElementById('dash30dTickets').textContent = count30d;
+    document.getElementById('dash30dAvg').textContent = avg30d.toFixed(2) + '€';
+
+    // Recent sales (last 10)
+    const users = await window.api.invoke('users:getAll');
+    const recentTable = document.getElementById('dashRecentSales').querySelector('tbody');
+    recentTable.innerHTML = sales30d.slice(0, 10).map(sale => {
+      const cashier = users.find(u => u.id === sale.cashier_id);
+      const date = new Date(sale.created_at);
+      const dateStr = date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <tr>
+          <td>#${sale.id}</td>
+          <td>${dateStr}</td>
+          <td>${cashier?.username || 'Inconnu'}</td>
+          <td>${parseFloat(sale.total).toFixed(2)}€</td>
+          <td>${sale.payment_method === 'cash' ? 'Espèces' : 'Carte'}</td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Erreur chargement dashboard:', error);
+  }
+}
+
+// ===== STATISTICS =====
+async function loadStatistics() {
+  try {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    // Récupérer les ventes des 30 derniers jours
+    const allSales = await window.api.invoke('sales:getByDate', {
+      from: thirtyDaysAgo.toISOString(),
+      to: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    });
+
+    if (!Array.isArray(allSales)) return;
+
+    // KPIs
+    const totalSales = allSales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const totalCash = allSales
+      .filter(s => s.payment_method === 'cash')
+      .reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const avgBasket = allSales.length > 0 ? totalSales / allSales.length : 0;
+
+    document.getElementById('statsTotalSales').textContent = totalSales.toFixed(2) + '€';
+    document.getElementById('statsTickets').textContent = allSales.length;
+    document.getElementById('statsAverage').textContent = avgBasket.toFixed(2) + '€';
+    document.getElementById('statsCash').textContent = totalCash.toFixed(2) + '€';
+
+    // Produits les plus vendus
+    const productStats = {};
+    for (const sale of allSales) {
+      const detail = await window.api.invoke('sales:getDetail', sale.id);
+      if (detail?.items) {
+        detail.items.forEach(item => {
+          if (!productStats[item.name]) {
+            productStats[item.name] = { qty: 0, total: 0 };
+          }
+          productStats[item.name].qty += item.quantity;
+          productStats[item.name].total += item.quantity * parseFloat(item.price || 0);
+        });
+      }
+    }
+
+    const productsTable = document.getElementById('statsProductsTable').querySelector('tbody');
+    productsTable.innerHTML = Object.entries(productStats)
+      .sort((a, b) => b[1].qty - a[1].qty)
+      .slice(0, 10)
+      .map(([name, stats]) => `
+        <tr>
+          <td>${name}</td>
+          <td>${stats.qty}</td>
+          <td>${stats.total.toFixed(2)}€</td>
+        </tr>
+      `).join('');
+
+    // Caissiers les plus productifs
+    const users = await window.api.invoke('users:getAll');
+    const cashierStats = {};
+    
+    allSales.forEach(sale => {
+      if (!cashierStats[sale.cashier_id]) {
+        const user = users.find(u => u.id === sale.cashier_id);
+        cashierStats[sale.cashier_id] = { 
+          name: user?.username || 'Inconnu',
+          tickets: 0,
+          total: 0
+        };
+      }
+      cashierStats[sale.cashier_id].tickets += 1;
+      cashierStats[sale.cashier_id].total += parseFloat(sale.total || 0);
+    });
+
+    const cashiersTable = document.getElementById('statsCashiersTable').querySelector('tbody');
+    const sortedCashiers = Object.values(cashierStats).sort((a, b) => b.total - a.total);
+    cashiersTable.innerHTML = sortedCashiers
+      .map(cashier => `
+        <tr>
+          <td>${cashier.name}</td>
+          <td>${cashier.tickets}</td>
+          <td>${cashier.total.toFixed(2)}€</td>
+        </tr>
+      `).join('');
+
+    // Charts
+    renderChartsForStatistics(allSales, productStats, sortedCashiers);
+
+  } catch (error) {
+    console.error('Erreur chargement statistiques:', error);
+  }
+}
+
+function renderChartsForStatistics(allSales, productStats, sortedCashiers) {
+  // Chart 1: Revenue trend (last 7 days)
+  const salesByDate = {};
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+    salesByDate[dateStr] = 0;
+  }
+
+  allSales.forEach(sale => {
+    // Parse created_at (ISO string like "2024-12-10T15:30:45.123Z")
+    const saleDate = new Date(sale.created_at);
+    const dateStr = saleDate.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+    if (dateStr in salesByDate) {
+      salesByDate[dateStr] += parseFloat(sale.total || 0);
+    }
+  });
+
+  const ctxRevenue = document.getElementById('chartRevenue')?.getContext('2d');
+  if (ctxRevenue) {
+    new Chart(ctxRevenue, {
+      type: 'line',
+      data: {
+        labels: Object.keys(salesByDate),
+        datasets: [{
+          label: 'Chiffre d\'affaires',
+          data: Object.values(salesByDate),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#2563eb',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: v => v.toFixed(0) + '€' }
+          }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Payment methods distribution
+  const totalCash = allSales
+    .filter(s => s.payment_method === 'cash')
+    .reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+  const totalCard = allSales
+    .filter(s => s.payment_method === 'card')
+    .reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+
+  const ctxPayment = document.getElementById('chartPayment')?.getContext('2d');
+  if (ctxPayment) {
+    new Chart(ctxPayment, {
+      type: 'doughnut',
+      data: {
+        labels: ['Espèces', 'Carte'],
+        datasets: [{
+          data: [totalCash, totalCard],
+          backgroundColor: ['#059669', '#2563eb'],
+          borderColor: '#fff',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  // Chart 3: Top 5 products
+  const top5Products = Object.entries(productStats)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 5);
+
+  const ctxProducts = document.getElementById('chartProducts')?.getContext('2d');
+  if (ctxProducts) {
+    new Chart(ctxProducts, {
+      type: 'bar',
+      data: {
+        labels: top5Products.map(p => p[0]),
+        datasets: [{
+          label: 'Quantité vendue',
+          data: top5Products.map(p => p[1].qty),
+          backgroundColor: '#16a34a',
+          borderColor: '#15803d',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // Chart 4: Top cashiers by revenue
+  const top5Cashiers = sortedCashiers.slice(0, 5);
+
+  const ctxCashiers = document.getElementById('chartCashiers')?.getContext('2d');
+  if (ctxCashiers) {
+    new Chart(ctxCashiers, {
+      type: 'bar',
+      data: {
+        labels: top5Cashiers.map(c => c.name),
+        datasets: [{
+          label: 'Chiffre d\'affaires',
+          data: top5Cashiers.map(c => c.total),
+          backgroundColor: '#ea580c',
+          borderColor: '#d97706',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { callback: v => v.toFixed(0) + '€' }
+          }
+        }
+      }
+    });
+  }
+}
 
 async function ensureAdminSession() {
   const res = await window.api.invoke('auth:getSession');
@@ -235,6 +593,55 @@ btnLoadAllSales.addEventListener('click', async () => {
   bindSalesActions();
 });
 
+btnExportSales.addEventListener('click', async () => {
+  try {
+    sStatus.textContent = 'Export en cours...';
+    
+    // Get sales in current range
+    const from = fromDate.value ? new Date(fromDate.value).toISOString() : new Date(0).toISOString();
+    const to = toDate.value ? new Date(toDate.value + 'T23:59:59').toISOString() : new Date().toISOString();
+    const sales = await window.api.invoke('sales:getByDate', { from, to });
+    
+    if (!sales || sales.length === 0) {
+      sStatus.textContent = 'Aucune vente à exporter';
+      return;
+    }
+
+    // Get users for cashier names
+    const users = await window.api.invoke('users:getAll');
+    
+    // Build CSV
+    let csv = 'Ticket,Date,Heure,Caissier,Total,Paiement,Especes_Remis,Rendu\n';
+    
+    for (const sale of sales) {
+      const cashier = users.find(u => u.id === sale.cashier_id);
+      const date = new Date(sale.created_at);
+      const dateStr = date.toLocaleDateString('fr-FR');
+      const timeStr = date.toLocaleTimeString('fr-FR');
+      const paymentMethod = sale.payment_method === 'cash' ? 'Espèces' : 'Carte';
+      const cashReceived = sale.cash_received || '';
+      const change = sale.change || '';
+      
+      csv += `#${sale.id},${dateStr},${timeStr},${cashier?.username || 'Inconnu'},${sale.total},${paymentMethod},${cashReceived},${change}\n`;
+    }
+    
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ventes_${fromDate.value || 'all'}_${toDate.value || 'all'}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    sStatus.textContent = `${sales.length} ventes exportées`;
+    setTimeout(() => sStatus.textContent = '', 3000);
+  } catch (error) {
+    console.error('Erreur export:', error);
+    sStatus.textContent = 'Erreur lors de l\'export';
+  }
+});
+
 btnOpenSession.addEventListener('click', async () => {
   const res = await window.api.invoke('workSession:open');
   sessionInfo.textContent = res?.ok ? `Session ouverte #${res.sessionId}` : (res?.error || 'Échec ouverture');
@@ -313,6 +720,8 @@ btnSaveAuthMode.addEventListener('click', async () => {
 
 window.addEventListener('DOMContentLoaded', async () => {
   if (!(await ensureAdminSession())) return;
+  setupNavigation();
+  await loadDashboard();
   await refreshWorkSessionInfo();
   await loadSessionsHistory();
   await loadUsers();

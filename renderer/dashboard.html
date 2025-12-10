@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard - Caisse Snack</title>
+	<link rel="stylesheet" href="styles.css">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+	<header>
+		<h1>Dashboard</h1>
+		<div class="actions">
+			<button class="secondary" id="btnBack">Retour</button>
+			<button id="btnLogout" class="secondary">Déconnexion</button>
+		</div>
+	</header>
+
+	<div class="dashboard-container">
+		<!-- KPIs -->
+		<section class="kpis">
+			<div class="kpi-card">
+				<div class="kpi-label">CA du jour</div>
+				<div class="kpi-value" id="kpiCA">0.00 €</div>
+				<div class="kpi-trend" id="kpiCATrend"></div>
+			</div>
+			<div class="kpi-card">
+				<div class="kpi-label">Tickets vendus</div>
+				<div class="kpi-value" id="kpiTickets">0</div>
+				<div class="kpi-trend" id="kpiTicketsTrend"></div>
+			</div>
+			<div class="kpi-card">
+				<div class="kpi-label">Panier moyen</div>
+				<div class="kpi-value" id="kpiAverage">0.00 €</div>
+				<div class="kpi-trend" id="kpiAverageTrend"></div>
+			</div>
+			<div class="kpi-card">
+				<div class="kpi-label">Session actuelle</div>
+				<div class="kpi-value" id="kpiSession">-</div>
+				<button class="secondary" id="btnSessionInfo" style="margin-top: 8px; font-size: 12px;">Infos</button>
+			</div>
+		</section>
+
+		<!-- Graphiques -->
+		<section class="charts-section">
+			<div class="chart-container">
+				<h3>CA par jour (7 derniers jours)</h3>
+				<canvas id="chartCADaily"></canvas>
+			</div>
+			<div class="chart-container">
+				<h3>Top 5 produits vendus</h3>
+				<canvas id="chartTopProducts"></canvas>
+			</div>
+		</section>
+
+		<!-- Recherche avancée -->
+		<section class="advanced-search">
+			<h3>Recherche avancée ventes</h3>
+			<div class="search-filters">
+				<div class="filter-group">
+					<label>Date de</label>
+					<input type="date" id="filterDateFrom">
+				</div>
+				<div class="filter-group">
+					<label>Date à</label>
+					<input type="date" id="filterDateTo">
+				</div>
+				<div class="filter-group">
+					<label>Caissier</label>
+					<select id="filterCashier">
+						<option value="">-- Tous --</option>
+					</select>
+				</div>
+				<div class="filter-group">
+					<label>Mode paiement</label>
+					<select id="filterPayment">
+						<option value="">-- Tous --</option>
+						<option value="cash">Espèces</option>
+						<option value="card">Carte</option>
+					</select>
+				</div>
+				<div class="filter-group">
+					<label>Montant min (€)</label>
+					<input type="number" id="filterMinAmount" step="0.01" min="0">
+				</div>
+				<div class="filter-group">
+					<label>Montant max (€)</label>
+					<input type="number" id="filterMaxAmount" step="0.01" min="0">
+				</div>
+				<button class="primary" id="btnSearch" style="min-height: 48px;">Chercher</button>
+				<button class="secondary" id="btnReset" style="min-height: 48px;">Réinitialiser</button>
+			</div>
+
+			<!-- Résultats recherche -->
+			<div class="search-results" id="searchResults" style="display: none; margin-top: 24px;">
+				<h4 id="resultsTitle"></h4>
+				<div style="overflow-x: auto;">
+					<table class="admin-table">
+						<thead>
+							<tr>
+								<th>N° Ticket</th>
+								<th>Date</th>
+								<th>Caissier</th>
+								<th>Total</th>
+								<th>Mode paiement</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody id="resultsTable">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<!-- Modal détail vente -->
+	<div class="modal hidden" id="modalSaleDetail">
+		<div class="modal-dialog">
+			<h3>Détail de la vente</h3>
+			<div id="saleDetailContent"></div>
+			<div class="modal-actions">
+				<button class="secondary" onclick="document.getElementById('modalSaleDetail').classList.add('hidden')">Fermer</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal infos session -->
+	<div class="modal hidden" id="modalSessionInfo">
+		<div class="modal-dialog">
+			<h3>Session actuelle</h3>
+			<div id="sessionInfoContent"></div>
+			<div class="modal-actions">
+				<button class="secondary" onclick="document.getElementById('modalSessionInfo').classList.add('hidden')">Fermer</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="dashboard.js"></script>
+</body>
+</html>

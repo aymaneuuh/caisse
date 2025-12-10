@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Caisse Pro</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     header h1::before {
-      content: '⚙️ ';
-      margin-right: 8px;
+      content: '';
+      margin-right: 0;
     }
     #goPos {
       background: linear-gradient(135deg, var(--success), #059669);
@@ -26,91 +27,306 @@
       font-weight: 600;
       font-size: 13px;
     }
+    .admin-navbar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .nav-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .admin-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .admin-section {
+      display: none;
+    }
+    .admin-section.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Caisse Pro - Administration</h1>
     <div class="actions">
-      <button id="goPos" class="success">💰 Aller à la caisse</button>
+      <button id="goPos" class="success">Aller à la caisse</button>
       <span id="userBadge"></span>
       <button id="btnLogout" class="danger">Déconnexion</button>
     </div>
   </header>
-  <main class="layout">
-    <section class="catalog">
-      <h2>⏰ Session de travail</h2>
-      <div class="admin-form">
-        <button id="btnOpenSession" class="primary success">Ouvrir la session</button>
-        <button id="btnCloseSession" class="warning">Fermer la session</button>
-        <span id="sessionInfo" class="muted" style="flex: 1; text-align: right; margin-left: auto;"></span>
+
+  <!-- Navigation bar -->
+  <div class="admin-navbar">
+    <button class="nav-btn active" data-section="dashboard">Tableau de bord</button>
+    <button class="nav-btn" data-section="sessions">Sessions</button>
+    <button class="nav-btn" data-section="stats">Statistiques</button>
+    <button class="nav-btn" data-section="users">Utilisateurs</button>
+    <button class="nav-btn" data-section="products">Produits</button>
+    <button class="nav-btn" data-section="sales">Ventes</button>
+    <button class="nav-btn" data-section="settings">Paramètres</button>
+  </div>
+
+  <main class="layout admin-sections">
+    <!-- DASHBOARD SECTION -->
+    <section class="admin-section active" id="section-dashboard">
+      <div class="catalog">
+        <h2>Tableau de bord</h2>
+        
+        <!-- KPIs Today -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 20px; border-radius: 8px; color: white;">
+            <div style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">CA Aujourd'hui</div>
+            <div style="font-size: 28px; font-weight: 700;" id="dashTodaySales">0.00€</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #16a34a, #15803d); padding: 20px; border-radius: 8px; color: white;">
+            <div style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">Tickets du jour</div>
+            <div style="font-size: 28px; font-weight: 700;" id="dashTodayTickets">0</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #ea580c, #c2410c); padding: 20px; border-radius: 8px; color: white;">
+            <div style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">Panier moyen</div>
+            <div style="font-size: 28px; font-weight: 700;" id="dashAvgBasket">0.00€</div>
+          </div>
+          <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); padding: 20px; border-radius: 8px; color: white;">
+            <div style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">Session actuelle</div>
+            <div style="font-size: 18px; font-weight: 700;" id="dashSessionStatus">Fermée</div>
+          </div>
+        </div>
+
+        <!-- Quick stats 7 days -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h3 style="margin-top: 0;">7 derniers jours</h3>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Chiffre d'affaires</span>
+              <strong id="dash7dSales">0.00€</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Nombre de tickets</span>
+              <strong id="dash7dTickets">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Panier moyen</span>
+              <strong id="dash7dAvg">0.00€</strong>
+            </div>
+          </div>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <h3 style="margin-top: 0;">30 derniers jours</h3>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Chiffre d'affaires</span>
+              <strong id="dash30dSales">0.00€</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Nombre de tickets</span>
+              <strong id="dash30dTickets">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Panier moyen</span>
+              <strong id="dash30dAvg">0.00€</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent sales -->
+        <div style="margin-top: 24px;">
+          <h3>Dernières ventes</h3>
+          <table class="admin-table" id="dashRecentSales">
+            <thead><tr><th>Ticket</th><th>Date</th><th>Caissier</th><th>Total</th><th>Paiement</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Quick actions -->
+        <div style="margin-top: 24px;">
+          <h3>Actions rapides</h3>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="primary" onclick="document.querySelector('[data-section=\"sessions\"]').click()">Gérer les sessions</button>
+            <button class="primary" onclick="document.querySelector('[data-section=\"stats\"]').click()">Voir statistiques</button>
+            <button class="primary" onclick="document.querySelector('[data-section=\"sales\"]').click()">Toutes les ventes</button>
+            <button class="success" onclick="window.location='index.html'">Ouvrir la caisse</button>
+          </div>
+        </div>
       </div>
-      <div class="admin-form">
-        <h3 style="width: 100%; margin-top: 0;">Historique des sessions</h3>
-      </div>
-      <table class="admin-table" id="sessionsTable">
-        <thead><tr><th>#</th><th>Ouverte par</th><th>Ouverture</th><th>Fermeture</th><th>Actions</th></tr></thead>
-        <tbody></tbody>
-      </table>
     </section>
-    <section class="catalog">
-      <h2>👥 Utilisateurs (Caissiers)</h2>
-      <div class="admin-form">
-        <input id="uName" type="text" placeholder="Nom d'utilisateur" />
-        <input id="uPass" type="password" placeholder="Mot de passe" />
-        <button id="btnAddCashier" class="primary success">+ Ajouter</button>
-        <div id="uStatus" class="muted"></div>
-      </div>
-      <table class="admin-table" id="usersTable">
-        <thead><tr><th>Nom</th><th>Rôle</th><th>Actions</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-    <section class="catalog">
-      <h2>📦 Produits</h2>
-      <div class="admin-form">
-        <input id="pName" type="text" placeholder="Nom du produit" />
-        <input id="pPrice" type="number" min="0" step="0.01" placeholder="Prix" />
-        <select id="pCategory"></select>
-        <button id="btnAddProduct" class="primary success">+ Ajouter</button>
-        <div id="pStatus" class="muted"></div>
-      </div>
-      <table class="admin-table" id="productTable">
-        <thead><tr><th>Nom</th><th>Prix</th><th>Catégorie</th><th>Actions</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-    <section class="catalog">
-      <h2>⚙️ Paramètres</h2>
-      <div class="admin-form">
-        <label style="width: 100%; margin-bottom: 8px;">Mode d'authentification des caissiers</label>
-        <select id="authModeSelect" style="flex: 1;">
-          <option value="password">Mot de passe requis</option>
-          <option value="select">Sélection de profil</option>
-        </select>
-        <button id="btnSaveAuthMode" class="primary success">Enregistrer</button>
-        <div id="authStatus" class="muted"></div>
+
+    <!-- SESSIONS SECTION -->
+    <section class="admin-section" id="section-sessions">
+      <div class="catalog">
+        <h2>Session de travail</h2>
+        <div class="admin-form">
+          <button id="btnOpenSession" class="primary success">Ouvrir la session</button>
+          <button id="btnCloseSession" class="warning">Fermer la session</button>
+          <span id="sessionInfo" class="muted" style="flex: 1; text-align: right; margin-left: auto;"></span>
+        </div>
+        <div class="admin-form">
+          <h3 style="width: 100%; margin-top: 0;">Historique des sessions</h3>
+        </div>
+        <table class="admin-table" id="sessionsTable">
+          <thead><tr><th>#</th><th>Ouverte par</th><th>Ouverture</th><th>Fermeture</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
-    <section class="cart">
-      <h2>💳 Ventes</h2>
-      <div class="admin-form">
-        <input id="fromDate" type="date" />
-        <input id="toDate" type="date" />
-        <button id="btnLoadSales" class="primary">Charger</button>
-        <button id="btnLoadAllSales" class="secondary">📋 Historique complet</button>
-        <div id="sStatus" class="muted"></div>
+
+    <!-- STATISTICS SECTION -->
+    <section class="admin-section" id="section-stats">
+      <div class="catalog">
+        <h2>Statistiques</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">Total ventes (30j)</div>
+            <div style="font-size: 24px; font-weight: 700; color: #2563eb;" id="statsTotalSales">0.00€</div>
+          </div>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">Nombre de tickets</div>
+            <div style="font-size: 24px; font-weight: 700; color: #16a34a;" id="statsTickets">0</div>
+          </div>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">Panier moyen</div>
+            <div style="font-size: 24px; font-weight: 700; color: #ea580c;" id="statsAverage">0.00€</div>
+          </div>
+          <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <div style="font-size: 13px; color: #666; margin-bottom: 8px;">Espèces</div>
+            <div style="font-size: 24px; font-weight: 700; color: #059669;" id="statsCash">0.00€</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <div>
+            <h3>Chiffre d'affaires (7 derniers jours)</h3>
+            <canvas id="chartRevenue" style="max-height: 300px;"></canvas>
+          </div>
+          <div>
+            <h3>Répartition des paiements</h3>
+            <canvas id="chartPayment" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <div>
+            <h3>Top 5 produits</h3>
+            <canvas id="chartProducts" style="max-height: 300px;"></canvas>
+          </div>
+          <div>
+            <h3>Caissiers - Chiffre d'affaires</h3>
+            <canvas id="chartCashiers" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <h3>Produits les plus vendus</h3>
+          <table class="admin-table" id="statsProductsTable">
+            <thead><tr><th>Produit</th><th>Quantité</th><th>Chiffre</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <h3>Caissiers les plus productifs</h3>
+          <table class="admin-table" id="statsCashiersTable">
+            <thead><tr><th>Caissier</th><th>Tickets</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
-      <table class="admin-table" id="salesTable">
-        <thead><tr><th>#</th><th>Total</th><th>Date</th><th>Caissier</th><th>Actions</th></tr></thead>
-        <tbody></tbody>
-      </table>
+    </section>
+
+    <!-- USERS SECTION -->
+    <section class="admin-section" id="section-users">
+      <div class="catalog">
+        <h2>Utilisateurs (Caissiers)</h2>
+        <div class="admin-form">
+          <input id="uName" type="text" placeholder="Nom d'utilisateur" />
+          <input id="uPass" type="password" placeholder="Mot de passe" />
+          <button id="btnAddCashier" class="primary success">+ Ajouter</button>
+          <div id="uStatus" class="muted"></div>
+        </div>
+        <table class="admin-table" id="usersTable">
+          <thead><tr><th>Nom</th><th>Rôle</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PRODUCTS SECTION -->
+    <section class="admin-section" id="section-products">
+      <div class="catalog">
+        <h2>Produits</h2>
+        <div class="admin-form">
+          <input id="pName" type="text" placeholder="Nom du produit" />
+          <input id="pPrice" type="number" min="0" step="0.01" placeholder="Prix" />
+          <select id="pCategory"></select>
+          <button id="btnAddProduct" class="primary success">+ Ajouter</button>
+          <div id="pStatus" class="muted"></div>
+        </div>
+        <table class="admin-table" id="productTable">
+          <thead><tr><th>Nom</th><th>Prix</th><th>Catégorie</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SALES SECTION -->
+    <section class="admin-section" id="section-sales">
+      <div class="cart">
+        <h2>Ventes</h2>
+        <div class="admin-form">
+          <input id="fromDate" type="date" />
+          <input id="toDate" type="date" />
+          <button id="btnLoadSales" class="primary">Charger</button>
+          <button id="btnLoadAllSales" class="secondary">Historique complet</button>
+          <button id="btnExportSales" class="success">Exporter CSV</button>
+          <div id="sStatus" class="muted"></div>
+        </div>
+        <table class="admin-table" id="salesTable">
+          <thead><tr><th>#</th><th>Total</th><th>Date</th><th>Caissier</th><th>Actions</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS SECTION -->
+    <section class="admin-section" id="section-settings">
+      <div class="catalog">
+        <h2>Paramètres</h2>
+        <div class="admin-form">
+          <label style="width: 100%; margin-bottom: 8px;">Mode d'authentification des caissiers</label>
+          <select id="authModeSelect" style="flex: 1;">
+            <option value="password">Mot de passe requis</option>
+            <option value="select">Sélection de profil</option>
+          </select>
+          <button id="btnSaveAuthMode" class="primary success">Enregistrer</button>
+          <div id="authStatus" class="muted"></div>
+        </div>
+      </div>
     </section>
   </main>
+
   <!-- Ticket Detail Modal -->
   <div id="ticketModal" class="modal hidden" aria-hidden="true">
     <div class="modal-dialog">
-      <h3>📋 Détail du ticket</h3>
+      <h3>Détail du ticket</h3>
       <div id="ticketInfo" class="muted" style="margin-bottom: 16px; padding: 12px; background: var(--bg); border-radius: 10px;"></div>
       <table class="admin-table">
         <thead><tr><th>Produit</th><th>Prix</th><th>Quantité</th><th>Total</th></tr></thead>

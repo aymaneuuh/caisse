@@ -7,11 +7,45 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     header h1::before {
-      content: '🛒 ';
-      margin-right: 8px;
+      content: '';
+      margin-right: 0;
     }
     header .actions input[type="search"] {
-      max-width: 320px;
+      max-width: 100%;
+      font-size: 18px;
+      min-height: 56px;
+      padding: 12px 16px;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 0 8px;
+    }
+    .category-btn {
+      min-height: 64px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 2px solid #e5e7eb;
+      background: white;
+      border-radius: 8px;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .category-btn:active {
+      transform: scale(0.97);
+      background: #f3f4f6;
+    }
+    .category-btn.active {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+    header button {
+      min-height: 56px;
+      font-size: 16px;
+      padding: 12px 20px;
     }
     @media (max-width: 1024px) {
       .layout {
@@ -28,27 +62,25 @@
   <header>
     <h1>Caisse Pro</h1>
     <div class="actions">
-      <input id="search" type="search" placeholder="🔍 Chercher un produit..." />
-      <select id="category">
-        <option value="">📦 Toutes catégories</option>
-      </select>
-      <button id="btnReload" class="secondary">🔄 Rafraîchir</button>
+      <input id="search" type="search" placeholder="Chercher un produit..." />
+      <button id="btnReload" class="secondary">Rafraîchir</button>
       <button id="btnLogout" class="danger">Déconnexion</button>
     </div>
   </header>
+  <div class="category-grid" id="categoryGrid"></div>
   <main class="layout">
     <section class="catalog">
-      <h2>📋 Catalogue produits</h2>
+      <h2>Catalogue produits</h2>
       <ul id="products" class="product-list"></ul>
     </section>
     <section class="cart">
-      <h2>🛍️ Panier</h2>
+      <h2>Panier</h2>
       <ul id="cart"></ul>
       <div class="cart-footer">
         <div class="total">Total: <span id="total">0.00€</span></div>
         <div class="cart-actions">
           <button id="btnClear" class="secondary">Vider</button>
-          <button id="btnCheckout" class="primary success" disabled>💳 Encaisser</button>
+          <button id="btnCheckout" class="primary success" disabled>Encaisser</button>
         </div>
         <div id="status"></div>
       </div>
@@ -57,7 +89,7 @@
   <!-- Checkout Modal -->
   <div id="checkoutModal" class="modal hidden" aria-hidden="true">
     <div class="modal-dialog">
-      <h3>💳 Encaissement</h3>
+      <h3>Encaissement</h3>
       <div class="pay-grid">
         <div>
           <div>Total à payer</div>
@@ -83,8 +115,8 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button id="btnCancelPay" class="secondary">Annuler (Esc)</button>
-        <button id="btnConfirmPay" class="success">✓ Valider (Entrée)</button>
+        <button id="btnCancelPay" class="secondary" style="min-height: 64px; font-size: 18px;">Annuler</button>
+        <button id="btnConfirmPay" class="success" style="min-height: 64px; font-size: 18px; font-weight: 700;">Valider</button>
       </div>
     </div>
   </div>

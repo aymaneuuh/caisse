@@ -3,7 +3,7 @@ const cartEl = document.getElementById('cart');
 const totalEl = document.getElementById('total');
 const statusEl = document.getElementById('status');
 const searchEl = document.getElementById('search');
-const categoryEl = document.getElementById('category');
+const categoryGrid = document.getElementById('categoryGrid');
 const btnReload = document.getElementById('btnReload');
 const btnCheckout = document.getElementById('btnCheckout');
 const btnClear = document.getElementById('btnClear');
@@ -24,6 +24,7 @@ let categories = [];
 let cart = new Map();
 let cashierId = null;
 let currentTotal = 0;
+let selectedCategoryId = null;
 
 function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
 
@@ -48,6 +49,24 @@ function renderProducts(list) {
   });
 }
 
+function renderCategoryButtons() {
+  const allBtn = `<button class="category-btn ${selectedCategoryId === null ? 'active' : ''}" data-category="">Tout</button>`;
+  const categoryBtns = categories.map(cat => `
+    <button class="category-btn ${selectedCategoryId === cat.id ? 'active' : ''}" data-category="${cat.id}">${cat.name}</button>
+  `).join('');
+  
+  categoryGrid.innerHTML = allBtn + categoryBtns;
+  
+  categoryGrid.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const catId = btn.getAttribute('data-category');
+      selectedCategoryId = catId ? Number(catId) : null;
+      renderCategoryButtons();
+      applyFilter();
+    });
+  });
+}
+
 function renderCart() {
   const items = Array.from(cart.values());
   cartEl.innerHTML = items.map(i => `
@@ -57,12 +76,12 @@ function renderCart() {
         <div class="item-price">${formatPrice(i.price)} × ${i.qty}</div>
       </div>
       <div class="qty-group">
-        <button class="icon" data-dec="${i.id}">−</button>
+        <button class="icon" data-dec="${i.id}">-</button>
         <input class="qty" data-qty="${i.id}" type="number" min="1" value="${i.qty}" />
         <button class="icon" data-inc="${i.id}">+</button>
       </div>
       <div style="font-weight: 700; color: var(--primary); text-align: right;">${formatPrice(i.price * i.qty)}</div>
-      <button class="icon danger" data-remove="${i.id}" style="background: linear-gradient(135deg, #ef4444, #dc2626); min-width: 44px;">✕</button>
+      <button class="icon danger" data-remove="${i.id}" style="background: linear-gradient(135deg, #ef4444, #dc2626); min-width: 44px;">×</button>
     </li>
   `).join('');
 
@@ -165,15 +184,13 @@ async function loadProducts() {
 
 async function loadCategories() {
   categories = await window.api.invoke('categories:getAll');
-  categoryEl.innerHTML = `<option value="">Toutes catégories</option>` +
-    categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  renderCategoryButtons();
 }
 
 function applyFilter() {
   const q = (searchEl.value || '').toLowerCase().trim();
-  const cat = categoryEl.value;
   let list = products;
-  if (cat) list = list.filter(p => String(p.category_id||'') === String(cat));
+  if (selectedCategoryId) list = list.filter(p => p.category_id === selectedCategoryId);
   if (q) list = list.filter(p => `${p.name} ${p.category||''}`.toLowerCase().includes(q));
   renderProducts(list);
 }
@@ -181,7 +198,6 @@ function applyFilter() {
 // Event listeners
 btnReload.addEventListener('click', loadProducts);
 searchEl.addEventListener('input', applyFilter);
-categoryEl.addEventListener('change', applyFilter);
 btnClear.addEventListener('click', clearCart);
 
 btnCheckout.addEventListener('click', () => {
