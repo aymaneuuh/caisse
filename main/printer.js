@@ -7,13 +7,15 @@ async function printTicket(db, saleId) {
   const outDir = path.join(process.cwd(), 'dist');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-  const pdfPath = path.join(outDir, `ticket-${saleId}.pdf`);
+  const timestamp = dayjs().format('YYYYMMDD-HHmmss');
+  const pdfPath = path.join(outDir, `ticket-${saleId}_${timestamp}.pdf`);
+  const htmlPath = path.join(outDir, `ticket-${saleId}_${timestamp}.html`);
 
   const sale = db.get('SELECT * FROM sales WHERE id=?', [saleId]);
   if (!sale) return { ok: false, error: 'Sale not found' };
 
   const items = db.all(`
-      SELECT si.quantity, si.price, p.name 
+      SELECT si.quantity, si.price, si.note, p.name 
       FROM sale_items si 
       JOIN products p ON p.id = si.product_id 
       WHERE si.sale_id=?`,
@@ -25,10 +27,11 @@ async function printTicket(db, saleId) {
     [sale.cashier_id]
   );
 
-  // Height auto : header + items + footer
+  // Height auto : header + items + footer (add space for notes)
   const baseHeight = 220;
   const perItem = 22;
-  const pageHeight = baseHeight + perItem * items.length;
+  const noteLines = items.reduce((sum, i) => sum + (i.note ? 1 : 0), 0);
+  const pageHeight = baseHeight + perItem * items.length + (noteLines * 12);
 
   const doc = new PDFDocument({
     margin: 10,
@@ -78,6 +81,14 @@ async function printTicket(db, saleId) {
     doc.text(i.price.toFixed(2) + "€", 97, y, { width: 28, align: "right" });
     doc.text((i.price * i.quantity).toFixed(2) + "€", 125, y, { width: 28, align: "right" });
     doc.moveDown(0.6);
+    
+    // Afficher la note si elle existe
+    if (i.note && i.note.trim()) {
+      doc.fontSize(6).fillColor('#666666');
+      doc.text(`  📝 ${i.note}`, 32, doc.y, { width: 121, align: "left" });
+      doc.fillColor('#000000').fontSize(7);
+      doc.moveDown(0.4);
+    }
   });
 
   separator(doc);

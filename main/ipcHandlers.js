@@ -167,7 +167,7 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
   });
 
   // Sales
-  ipcMain.handle('sales:create', (event, { items, cashier_id }) => {
+  ipcMain.handle('sales:create', (event, { items, cashier_id, payment_method, cash_received, change }) => {
     const cashierId = Number(cashier_id);
     if (!cashierId) return { ok: false, error: 'Caissier invalide' };
     if (!Array.isArray(items) || items.length === 0) return { ok: false, error: 'Panier vide' };
@@ -183,18 +183,52 @@ module.exports = function registerIpcHandlers(ipcMain, db) {
     const now = dayjs().toISOString();
     const saleId = db.transaction(() => {
       let total = 0;
+      
+      // Calculate total including supplements
       for (const it of items) {
         const p = db.get('SELECT id, price FROM products WHERE id=?', [it.product_id]);
         const unitPrice = it.price ?? p.price;
-        total += unitPrice * it.quantity;
+        let itemTotal = unitPrice * it.quantity;
+        
+        // Add supplements to total
+        if (it.supplements && Array.isArray(it.supplements)) {
+          for (const sup of it.supplements) {
+            itemTotal += sup.price * sup.qty * it.quantity;
+          }
+        }
+        
+        total += itemTotal;
       }
-      db.run('INSERT INTO sales (total, created_at, cashier_id, session_id) VALUES (?, ?, ?, ?)', [total, now, cashierId, currentWorkSessionId]);
+      
+      // Insert sale with payment info
+      db.run(
+        'INSERT INTO sales (total, created_at, cashier_id, session_id, payment_method, cash_received, change) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+        [total, now, cashierId, currentWorkSessionId, payment_method || 'cash', cash_received, change || 0]
+      );
       const saleId = db.get('SELECT last_insert_rowid() as id').id;
+      
+      // Insert sale items with notes and supplements
       for (const it of items) {
         const p = db.get('SELECT id, price FROM products WHERE id=?', [it.product_id]);
         const unitPrice = it.price ?? p.price;
-        db.run('INSERT INTO sale_items (sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?)', [saleId, it.product_id, it.quantity, unitPrice]);
+        
+        // Insert main item with note
+        db.run(
+          'INSERT INTO sale_items (sale_id, product_id, quantity, price, note) VALUES (?, ?, ?, ?, ?)', 
+          [saleId, it.product_id, it.quantity, unitPrice, it.note || null]
+        );
+        
+        // Insert supplements as separate sale_items
+        if (it.supplements && Array.isArray(it.supplements)) {
+          for (const sup of it.supplements) {
+            db.run(
+              'INSERT INTO sale_items (sale_id, product_id, quantity, price, note) VALUES (?, ?, ?, ?, ?)', 
+              [saleId, sup.id, sup.qty * it.quantity, sup.price, `Supplément pour ${p.name}`]
+            );
+          }
+        }
       }
+      
       db.run('INSERT INTO audit (action, user_id, created_at) VALUES (?, ?, ?)', ['sale:create', cashierId, now]);
       return saleId;
     });

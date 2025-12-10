@@ -90,36 +90,84 @@
   <div id="checkoutModal" class="modal hidden" aria-hidden="true">
     <div class="modal-dialog">
       <h3>Encaissement</h3>
-      <div class="pay-grid">
-        <div>
-          <div>Total à payer</div>
-          <div id="payTotal" class="amount">0.00€</div>
-          <label for="paymentMethod" style="display:block; font-weight:600; margin-top:12px;">Mode de paiement</label>
-          <select id="paymentMethod">
-            <option value="cash">Espèces</option>
-            <option value="card">Carte</option>
-          </select>
+      
+      <!-- Step 1: Choose Payment Method -->
+      <div id="paymentMethodStep">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 20px; font-weight: 700; color: var(--primary);" id="payTotal">0.00€</div>
+          <div style="font-size: 13px; color: var(--muted); margin-top: 8px;">Total à payer</div>
         </div>
-        <div id="cashArea">
-          <label for="cashInput" style="display: block; font-weight: 600; margin-bottom: 8px;">Montant remis</label>
-          <input id="cashInput" type="number" min="0" step="0.01" value="0" inputmode="decimal" />
-          <div class="change">Rendu: <span id="changeValue">0.00€</span></div>
-          <div class="quick">
-            <button data-cash="exact" class="warning">Exact</button>
-            <button data-cash="+0.5" class="success">+0,50€</button>
-            <button data-cash="+1" class="success">+1€</button>
-            <button data-cash="+2" class="success">+2€</button>
-            <button data-cash="+5" class="success">+5€</button>
-            <button data-cash="+10" class="success">+10€</button>
-          </div>
+        <p style="text-align: center; font-size: 14px; color: var(--muted); margin: 16px 0;">Choisir le mode de paiement</p>
+        <div class="payment-choice">
+          <button id="btnPayCash" class="payment-btn payment-btn-success" data-method="cash">
+            <div style="font-size: 20px; font-weight: 700;">Espèces</div>
+            <div style="font-size: 11px; margin-top: 4px;">Payer en liquide</div>
+          </button>
+          <button id="btnPayCard" class="payment-btn payment-btn-primary" data-method="card">
+            <div style="font-size: 20px; font-weight: 700;">Carte</div>
+            <div style="font-size: 11px; margin-top: 4px;">Payer par carte</div>
+          </button>
         </div>
       </div>
+
+      <!-- Step 2: Cash Payment -->
+      <div id="cashPaymentStep" style="display: none;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Total à payer</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--primary);" id="cashPayTotal">0.00€</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-weight: 700; font-size: 13px; margin-bottom: 10px;">Montant remis</label>
+          <input id="cashInput" type="number" min="0" step="0.01" value="0" inputmode="decimal" style="width: 100%; padding: 14px; font-size: 18px; font-weight: 700; border: 2px solid var(--border); border-radius: 8px; text-align: center;" />
+        </div>
+        <div class="change-display">
+          <div>Rendu:</div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--success);" id="changeValue">0.00€</div>
+        </div>
+        <div class="quick-cash-grid">
+          <button data-cash="exact" class="quick-btn quick-btn-warning">Exact</button>
+          <button data-cash="+0.5" class="quick-btn quick-btn-success">+0,50€</button>
+          <button data-cash="+1" class="quick-btn quick-btn-success">+1€</button>
+          <button data-cash="+2" class="quick-btn quick-btn-success">+2€</button>
+          <button data-cash="+5" class="quick-btn quick-btn-success">+5€</button>
+          <button data-cash="+10" class="quick-btn quick-btn-success">+10€</button>
+        </div>
+      </div>
+
+      <!-- Actions -->
       <div class="modal-actions">
-        <button id="btnCancelPay" class="secondary" style="min-height: 64px; font-size: 18px;">Annuler</button>
-        <button id="btnConfirmPay" class="success" style="min-height: 64px; font-size: 18px; font-weight: 700;">Valider</button>
+        <button id="btnCancelPay" class="secondary" style="min-height: 56px; font-size: 16px;">Annuler</button>
+        <button id="btnConfirmPay" class="success" style="min-height: 56px; font-size: 16px; font-weight: 700;">Valider</button>
       </div>
     </div>
   </div>
+
+  <!-- Note Modal -->
+  <div id="noteModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-dialog">
+      <h3>Ajouter une note</h3>
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-weight: 700; margin-bottom: 10px; font-size: 14px;">Note pour le produit:</label>
+        <textarea id="noteInput" rows="4" style="width: 100%; padding: 14px; font-size: 15px; border: 2px solid var(--border); border-radius: 10px; resize: vertical;" placeholder="Ex: Sans oignons, bien cuit, etc."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelNote" class="secondary" style="min-height: 56px;">Annuler</button>
+        <button id="btnSaveNote" class="success" style="min-height: 56px; font-weight: 700;">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supplements Modal -->
+  <div id="supplementsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <h3>Ajouter des suppléments</h3>
+      <div id="supplementsList" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;"></div>
+      <div class="modal-actions">
+        <button id="btnCancelSupplements" class="secondary" style="min-height: 56px;">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
