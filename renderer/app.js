@@ -47,19 +47,18 @@ function formatPrice(n) { return `${Number(n).toFixed(2)}€`; }
 
 function renderProducts(list) {
   productsEl.innerHTML = list.map(p => `
-    <li>
+    <li data-add="${p.id}" style="cursor: pointer;">
       <div>
         <div>${p.name}</div>
         <div class="price">${formatPrice(p.price)}</div>
         <div class="meta">${p.category || 'Catégorie'}</div>
       </div>
-      <button data-add="${p.id}" class="primary">+ Ajouter</button>
     </li>
   `).join('');
 
-  productsEl.querySelectorAll('button[data-add]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = Number(btn.getAttribute('data-add'));
+  productsEl.querySelectorAll('li[data-add]').forEach(li => {
+    li.addEventListener('click', () => {
+      const id = Number(li.getAttribute('data-add'));
       const prod = products.find(x => x.id === id);
       addToCart(prod);
     });
@@ -103,8 +102,8 @@ function renderCart() {
           ` : ''}
         </div>
         <div style="display: flex; gap: 6px;">
-          <button class="icon warning" data-note="${i.id}" style="min-width: 40px; font-size: 18px; background: linear-gradient(135deg, #f59e0b, #d97706);" title="Ajouter note">📝</button>
-          <button class="icon success" data-supp="${i.id}" style="min-width: 40px; font-size: 18px; background: linear-gradient(135deg, #10b981, #059669);" title="Ajouter suppléments">+</button>
+          <button class="icon warning" data-note="${i.id}" style="min-width: 36px; min-height: 36px; font-size: 14px; padding: 6px;" title="Ajouter note">📝</button>
+          <button class="icon success" data-supp="${i.id}" style="min-width: 36px; min-height: 36px; font-size: 16px; padding: 6px;" title="Ajouter suppléments">+</button>
         </div>
       </div>
       <div class="qty-group">

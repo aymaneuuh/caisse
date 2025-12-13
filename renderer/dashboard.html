@@ -3,9 +3,22 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Dashboard - Caisse Snack</title>
+	<title>Dashboard - FlashCaisse</title>
 	<link rel="stylesheet" href="styles.css">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		:root {
+			--snack-primary: #ff8c00;
+			--snack-hover: #e07b00;
+		}
+		header h1::before {
+			content: '';
+		}
+		header button {
+			min-height: 64px;
+			font-size: 17px;
+		}
+	</style>
 </head>
 <body>
 	<header>
@@ -87,8 +100,8 @@
 					<label>Montant max (€)</label>
 					<input type="number" id="filterMaxAmount" step="0.01" min="0">
 				</div>
-				<button class="primary" id="btnSearch" style="min-height: 48px;">Chercher</button>
-				<button class="secondary" id="btnReset" style="min-height: 48px;">Réinitialiser</button>
+				<button class="primary" id="btnSearch" style="min-height: 64px;">Chercher</button>
+				<button class="secondary" id="btnReset" style="min-height: 64px;">Réinitialiser</button>
 			</div>
 
 			<!-- Résultats recherche -->

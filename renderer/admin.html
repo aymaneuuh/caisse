@@ -7,52 +7,65 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --snack-primary: #ff8c00;
+      --snack-hover: #e07b00;
+    }
     header h1::before {
       content: '';
       margin-right: 0;
     }
     #goPos {
-      background: linear-gradient(135deg, var(--success), #059669);
+      background: linear-gradient(135deg, var(--success), var(--success-dark));
       color: #fff;
       border: none;
+      min-height: 64px;
+      font-size: 17px;
     }
     #goPos:hover {
-      background: linear-gradient(135deg, var(--success-dark), #047857);
+      background: linear-gradient(135deg, var(--success-dark), #1e7e34);
     }
     #userBadge {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      padding: 8px 16px;
+      background: var(--primary);
+      padding: 10px 20px;
       border-radius: 20px;
       color: #fff;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
     .admin-navbar {
       display: flex;
-      gap: 8px;
-      padding: 12px 24px;
-      background: #f5f5f5;
-      border-bottom: 1px solid #ddd;
+      gap: 12px;
+      padding: 16px 24px;
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
       flex-wrap: wrap;
     }
     .nav-btn {
-      padding: 8px 16px;
-      border: 1px solid #ddd;
+      padding: 14px 20px;
+      border: 2px solid var(--border);
       background: #fff;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 15px;
+      font-weight: 700;
       transition: all 0.2s;
+      min-height: 60px;
+      touch-action: manipulation;
     }
     .nav-btn:hover {
-      background: var(--primary);
+      background: var(--snack-primary);
       color: #fff;
-      border-color: var(--primary);
+      border-color: var(--snack-primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(255, 140, 0, 0.2);
     }
     .nav-btn.active {
-      background: var(--primary);
+      background: var(--snack-primary);
       color: #fff;
-      border-color: var(--primary);
+      border-color: var(--snack-primary);
+      box-shadow: 0 4px 10px rgba(255, 140, 0, 0.25);
     }
     .admin-sections {
       display: flex;
