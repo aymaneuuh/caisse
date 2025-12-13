@@ -33,12 +33,6 @@ async function printTicket(db, saleId) {
   const NOTE_HEIGHT = 10;
   const FOOTER_HEIGHT = 80;
   
-  // Calcul du nombre de lignes avec notes
-  let totalLines = items.length;
-  items.forEach(i => {
-    if (i.note && i.note.trim()) totalLines += 1;
-  });
-  
   const itemsHeight = (items.length * LINE_HEIGHT) + 
                       (items.filter(i => i.note && i.note.trim()).length * NOTE_HEIGHT);
   
@@ -59,9 +53,9 @@ async function printTicket(db, saleId) {
     margin: 0 
   });
 
-  const MX = 8; // Marge X
+  const MX = 8;
   const W = pageWidth - (MX * 2);
-  let y = 12; // Position Y manuelle
+  let y = 12;
 
   // ========== HEADER ==========
   doc.font('Helvetica-Bold').fontSize(12);
@@ -93,7 +87,7 @@ async function printTicket(db, saleId) {
   doc.text(dayjs(sale.created_at).format("DD/MM/YYYY à HH:mm"), MX, y, { width: W, align: "center" });
   y += 9;
   doc.text(`Caissier: ${cashier?.username || "N/A"}`, MX, y, { width: W, align: "center" });
-  y += 10; // Saut de ligne après caissier
+  y += 10;
   y += 12;
 
   drawSeparator(doc, y, pageWidth);
@@ -126,12 +120,21 @@ async function printTicket(db, saleId) {
     
     y += LINE_HEIGHT;
     
-    // Note si elle existe
+    // Note si elle existe (nettoyée des caractères bizarres)
     if (i.note && i.note.trim()) {
-      doc.fontSize(6).fillColor('#666666');
-      doc.text(`  📝 ${i.note}`, 32, y, { width: 121, align: "left" });
-      doc.fillColor('#000000').fontSize(7);
-      y += NOTE_HEIGHT;
+      // Nettoyer les caractères bizarres et emojis
+      let cleanNote = i.note
+        .replace(/Ø=ÜÝ/g, '')  // Retirer Ø=ÜÝ
+        .replace(/📝/g, '')     // Retirer l'emoji
+        .replace(/[^\x20-\x7E\u00C0-\u00FF]/g, '') // Retirer autres caractères non-ASCII
+        .trim();
+      
+      if (cleanNote) {
+        doc.fontSize(6).fillColor('#666666');
+        doc.text(`  > ${cleanNote}`, 32, y, { width: 121, align: "left" });
+        doc.fillColor('#000000').fontSize(7);
+        y += NOTE_HEIGHT;
+      }
     }
   });
 

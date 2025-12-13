@@ -6,13 +6,23 @@
   <title>Connexion — FlashCaisse</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
+    :root {
+      --snack-primary: #ff8c00; /* Orange foncé style Burger/Snack */
+      --snack-hover: #e07b00;
+      --snack-bg: #fffbf5;
+      --danger: #dc3545;
+    }
+
     body {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      background: #f5f5f5;
+      background: var(--snack-bg);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
     }
+    
     .login {
       width: 100%;
       display: flex;
@@ -20,163 +30,360 @@
       justify-content: center;
       padding: 20px;
     }
+
     .login-card {
       background: #ffffff;
-      border: 1px solid #cccccc;
-      border-radius: 8px;
-      padding: 32px;
+      border: none;
+      border-radius: 16px;
+      padding: 40px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(255, 140, 0, 0.15); /* Ombre portée orangée */
+      position: relative;
+      border-top: 6px solid var(--snack-primary); /* Ligne décorative */
     }
+
     .login-card h2 {
-      margin: 0 0 8px 0;
-      font-size: 26px;
-      font-weight: 600;
+      margin: 0 0 10px 0;
+      font-size: 28px;
+      font-weight: 800;
       text-align: center;
-      color: #0066cc;
+      color: #333;
     }
-    .login-card > div:nth-child(2) {
+
+    .subtitle {
       text-align: center;
-      color: #666666;
-      font-size: 13px;
-      margin-bottom: 20px;
-    }
-    .role-chooser {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .role-chooser .role {
-      padding: 12px;
-      border: 1px solid #cccccc;
-      border-radius: 6px;
-      background: #ffffff;
-      color: #1a1a1a;
+      color: #888;
       font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      margin-bottom: 30px;
+      font-weight: 500;
     }
-    .role-chooser .role:hover {
-      border-color: #0066cc;
-      background: #f9f9f9;
-    }
-    .role-chooser .role.active {
-      border-color: #0066cc;
-      background: #0066cc;
-      color: #fff;
-    }
+    
+    /* --- Styles des formulaires --- */
     .login-card label {
       display: block;
-      margin-top: 12px;
+      margin-top: 15px;
       margin-bottom: 6px;
       font-size: 13px;
-      font-weight: 600;
-      color: #666666;
+      font-weight: 700;
+      color: #555;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
+
     .login-card input, .login-card select {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cccccc;
-      border-radius: 6px;
-      background: #ffffff;
-      color: #1a1a1a;
-      font-size: 14px;
+      padding: 12px 15px;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      background: #fafafa;
+      color: #333;
+      font-size: 15px;
       box-sizing: border-box;
       transition: all 0.2s;
     }
+
     .login-card input:focus, .login-card select:focus {
-      border-color: #0066cc;
+      border-color: var(--snack-primary);
+      background: #fff;
       outline: none;
-      box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
     }
+
+    /* --- Bouton Principal --- */
     .login-actions {
-      margin-top: 20px;
+      margin-top: 25px;
     }
+
     .login-actions button {
       width: 100%;
-      min-height: 44px;
-      font-size: 15px;
+      min-height: 50px;
+      font-size: 16px;
       font-weight: 700;
       border: none;
-      border-radius: 6px;
-      background: #0066cc;
+      border-radius: 8px;
+      background: var(--snack-primary);
       color: #fff;
       cursor: pointer;
       transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(255, 140, 0, 0.2);
     }
+
     .login-actions button:hover {
-      background: #004499;
+      background: var(--snack-hover);
+      transform: translateY(-2px);
     }
-    .login-actions button:active {
-      transform: translateY(0);
-    }
+    
+    /* --- Statut --- */
     #loginStatus {
-      margin-top: 12px;
+      margin-top: 15px;
       text-align: center;
-      font-size: 13px;
-      min-height: 18px;
+      font-size: 14px;
+      min-height: 20px;
     }
-    #loginStatus.error {
-      color: #dc3545;
+    #loginStatus.error { color: var(--danger); font-weight: 600; }
+    #loginStatus.success { color: #28a745; font-weight: 600; }
+    
+    /* Mode Caissier selecteur */
+    #cashierSelector { display: none; }
+    #cashierSelector.active { display: block; }
+
+    /* --- NOUVEAUX STYLES NAVIGATION ADMIN --- */
+    
+    /* Footer pour le lien admin */
+    .admin-footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px dashed #eee;
+      text-align: center;
+    }
+    
+    /* Le petit bouton rouge discret */
+    #btnShowAdmin {
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    #btnShowAdmin:hover {
+      color: var(--danger);
+      background: #fff5f5;
+      text-decoration: underline;
+    }
+
+    /* Entête du formulaire Admin (Titre + Bouton Annuler) */
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .admin-title {
+      color: var(--danger);
+      font-weight: bold;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    #btnBackToCashier {
+      background: transparent;
+      border: 1px solid #ddd;
+      color: #666;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
       font-weight: 600;
     }
-    #loginStatus.success {
-      color: #28a745;
-      font-weight: 600;
+    #btnBackToCashier:hover {
+      background: #f0f0f0;
+      color: #333;
+      border-color: #ccc;
     }
-    #cashierSelector {
-      display: none;
+
+    /* --- WIDGET ASSISTANT IA --- */
+    #ai-widget {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      z-index: 9999;
     }
-    #cashierSelector.active {
-      display: block;
+
+    /* Bouton rond flottant */
+    #ai-fab {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: var(--snack-primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, background 0.2s;
     }
+    #ai-fab:hover {
+      transform: scale(1.1) rotate(5deg);
+      background-color: var(--snack-hover);
+    }
+
+    /* Fenêtre de chat */
+    #ai-chat-window {
+      position: absolute;
+      bottom: 80px;
+      right: 0;
+      width: 320px;
+      height: 420px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #eee;
+      transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+      transform-origin: bottom right;
+    }
+    
+    #ai-chat-window.hidden {
+      opacity: 0;
+      transform: scale(0.8) translateY(20px);
+      pointer-events: none;
+    }
+
+    .ai-header {
+      background: var(--snack-primary);
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #ai-close-btn {
+      background: none; border: none; color: white; font-size: 22px; cursor: pointer;
+    }
+
+    #ai-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .message.bot {
+      align-self: flex-start;
+      background: #e9ecef;
+      color: #333;
+      border-bottom-left-radius: 2px;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: var(--snack-primary);
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .ai-input-area {
+      padding: 10px;
+      border-top: 1px solid #eee;
+      display: flex;
+      gap: 8px;
+      background: white;
+    }
+    #ai-input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+    #ai-input:focus { border-color: var(--snack-primary); }
+    
+    #ai-send-btn {
+      background: var(--snack-primary);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    #ai-send-btn:hover { background: var(--snack-hover); }
+
   </style>
 </head>
 <body>
   <div class="login" aria-hidden="false">
     <div class="login-card">
       <h2>FlashCaisse</h2>
-      <div>Système de paiement</div>
-      <div class="role-chooser">
-        <button class="role active" data-role="cashier">Caissier</button>
-        <button class="role" data-role="admin">Admin</button>
-      </div>
+      <div class="subtitle">Connexion Point de Vente</div>
       
-      <!-- Admin login -->
+      <!-- Admin Login (Masqué par défaut) -->
       <div id="adminForm" style="display: none;">
-        <label>Utilisateur</label>
+        <div class="admin-header">
+          <span class="admin-title">🔒 Espace Administration</span>
+          <button id="btnBackToCashier">Annuler</button>
+        </div>
+        
+        <label>Utilisateur Admin</label>
         <input id="loginUser" type="text" placeholder="admin" />
         <label>Mot de passe</label>
         <input id="loginPass" type="password" placeholder="••••••" />
       </div>
       
-      <!-- Cashier login -->
+      <!-- Caissier Login (Visible par défaut) -->
       <div id="cashierForm">
-        <!-- Password mode (default) -->
+        <!-- Mode Mot de passe -->
         <div id="passwordMode">
-          <label>Utilisateur</label>
+          <label>Utilisateur Caissier</label>
           <input id="cashierUser" type="text" placeholder="Entrez votre identifiant" />
           <label>Mot de passe</label>
           <input id="cashierPass" type="password" placeholder="••••••" />
         </div>
-        <!-- Select mode (optional) -->
+        <!-- Mode Sélection -->
         <div id="cashierSelector" class="active">
-          <label>Sélectionnez votre profil</label>
+          <label>Qui prend la commande ?</label>
           <select id="cashierSelect"></select>
         </div>
       </div>
       
       <div class="login-actions">
-        <button id="btnLogin" class="primary">Accéder</button>
+        <button id="btnLogin" class="primary">CONNEXION</button>
       </div>
+      
       <div id="loginStatus"></div>
+
+      <!-- Lien discret pour basculer vers Admin -->
+      <div class="admin-footer" id="adminLinkContainer">
+        <button id="btnShowAdmin">Accès Administration</button>
+      </div>
+
     </div>
   </div>
+
+  <!-- WIDGET ASSISTANT IA -->
+  <div id="ai-widget">
+    <div id="ai-chat-window" class="hidden">
+      <div class="ai-header">
+        <span>🤖 Assistant FlashCaisse</span>
+        <button id="ai-close-btn">×</button>
+      </div>
+      <div id="ai-messages">
+        <div class="message bot">Bonjour ! Je suis votre assistant virtuel. Comment puis-je vous aider ?</div>
+      </div>
+      <div class="ai-input-area">
+        <input type="text" id="ai-input" placeholder="Posez une question..." />
+        <button id="ai-send-btn">➤</button>
+      </div>
+    </div>
+    <button id="ai-fab" title="Ouvrir l'assistant">💬</button>
+  </div>
+
   <script src="login.js"></script>
 </body>
 </html>
